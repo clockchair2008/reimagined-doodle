@@ -11,7 +11,7 @@ import * as path from 'path';
 // Bilingual labels (English / Arabic) for ZATCA Saudi invoices
 const LABELS = {
   taxInvoice: { en: 'Tax Invoice', ar: 'فاتورة ضريبية' },
-  simplifiedTaxInvoice: { en: 'Simplified Tax Invoice', ar: 'فاتورة ضريبية مبسطة' },
+  simplifiedTaxInvoice: { en: 'Clock Chair Company', ar: 'فاتورة ضريبية مبسطة' },
   creditNote: { en: 'Credit Note', ar: 'إشعار دائن' },
   debitNote: { en: 'Debit Note', ar: 'إشعار مدين' },
   invoiceNo: { en: 'Invoice No', ar: 'رقم الفاتورة' },

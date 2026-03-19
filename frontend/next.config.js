@@ -1,4 +1,21 @@
 /** @type {import('next').NextConfig} */
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+let apiOrigin = 'http://localhost:3001'
+try {
+  apiOrigin = new URL(apiUrl).origin
+} catch {
+  // If NEXT_PUBLIC_API_URL isn't a valid URL, fall back to localhost.
+}
+
+const extraConnectSrc = (process.env.CSP_CONNECT_SRC || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+const connectSrcAllowList = Array.from(
+  new Set(["'self'", apiOrigin, 'http://localhost:3001', ...extraConnectSrc]),
+).join(' ')
+
 const nextConfig = {
   reactStrictMode: true,
   env: {
@@ -34,7 +51,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' http://localhost:3001",
+              `connect-src ${connectSrcAllowList}`,
               "frame-ancestors 'none'",
             ].join('; '),
           },
