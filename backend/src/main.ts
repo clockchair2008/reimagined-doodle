@@ -6,11 +6,19 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
   // Enable CORS for frontend
-  app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    credentials: true,
-  });
-
+  // app.enableCors({
+  //   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  //   credentials: true,
+  // });
+app.enableCors({
+  origin: [
+    'http://localhost:3000',
+    'https://portal.clockchair.com',
+    'https://www.clockchair.com',
+   'https://www.clockchair.com,https://portal.clockchair.com,https://zatca-frontend.vercel.app'
+  ],
+  credentials: true,
+});
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
