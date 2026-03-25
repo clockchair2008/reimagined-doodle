@@ -537,7 +537,7 @@ export function mapInvoiceToTemplateInput(params: {
     documentNumber: invoice.invoiceNumber,
     issueDate,
     dueDate: issueDate,
-    orderNumber: '—',
+    orderNumber: invoice.orderNumber ?? '—',
     items,
     subtotal: Number(invoice.subtotal ?? 0),
     vatTotal: Number(invoice.vatAmount ?? 0),

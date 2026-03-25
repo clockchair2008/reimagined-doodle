@@ -46,6 +46,9 @@ export class Invoice {
   @JoinColumn({ name: 'customerId' })
   customer: Customer;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  orderNumber: string;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   subtotal: number;
 

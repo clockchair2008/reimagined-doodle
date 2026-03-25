@@ -97,6 +97,7 @@ export class InvoicesService {
       issueDateTime: createInvoiceDto.issueDateTime || new Date(),
       companyId: createInvoiceDto.companyId,
       customerId: createInvoiceDto.customerId,
+      orderNumber: createInvoiceDto.orderNumber,
       subtotal,
       vatAmount,
       totalAmount,
