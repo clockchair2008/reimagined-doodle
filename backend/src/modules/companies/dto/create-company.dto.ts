@@ -9,6 +9,10 @@ export class CreateCompanyDto {
 
   @IsString()
   @IsOptional()
+  commercialRegistration?: string;
+
+  @IsString()
+  @IsOptional()
   address?: string;
 
   @IsString()

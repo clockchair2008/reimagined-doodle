@@ -153,6 +153,8 @@ export class CreditNotesService {
     note.previousHash = previousHash;
     note.currentHash = currentHash;
 
+    note.qrCode = null;
+    note.qrCodeData = null;
     if (customer.type === 'B2C') {
       try {
         const qr = await this.qrCodeService.generateInvoiceQRCode(

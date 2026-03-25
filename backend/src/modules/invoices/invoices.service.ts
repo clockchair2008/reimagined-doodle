@@ -258,8 +258,10 @@ export class InvoicesService {
       invoice.previousHash = previousHash;
       invoice.currentHash = currentHash;
 
-      // Generate QR code for simplified invoices (B2C)
-      if (customer.type && customer.type === 'B2C') {
+      // QR only for simplified (B2C) invoices; clear for B2B
+      invoice.qrCode = null;
+      invoice.qrCodeData = null;
+      if (customer.type === 'B2C') {
         try {
           const qrCode = await this.qrCodeService.generateInvoiceQRCode(
             company.name,
@@ -272,7 +274,6 @@ export class InvoicesService {
           invoice.qrCodeData = qrCode.tlvData;
         } catch (error) {
           console.error('Error generating QR code:', error);
-          // Continue without QR code if generation fails
         }
       }
 
@@ -350,11 +351,9 @@ export class InvoicesService {
         currentHash: currentHash,
       };
 
-      // Add optional fields if they exist
-      if (invoice.qrCode) {
-        updateData.qrCode = invoice.qrCode;
-        updateData.qrCodeData = invoice.qrCodeData;
-      }
+      // B2B: persist null QR; B2C: persist generated QR
+      updateData.qrCode = invoice.qrCode;
+      updateData.qrCodeData = invoice.qrCodeData;
 
       if (invoice.xmlContent) {
         updateData.xmlContent = invoice.xmlContent;

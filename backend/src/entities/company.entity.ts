@@ -17,6 +17,10 @@ export class Company {
   @Column({ type: 'varchar', length: 50, unique: true })
   vatNumber: string;
 
+  /** Commercial Registration (CR) number */
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  commercialRegistration: string;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   address: string;
 
