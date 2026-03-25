@@ -29,6 +29,7 @@ function toDataUrlIfBase64Png(maybeDataUrl: string | null | undefined): string |
 @Injectable()
 export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
   private browser: Browser | null = null;
+  private defaultLogoDataUrl: string | null = null;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -54,6 +55,33 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
     } catch {
       return null;
     }
+  }
+
+  private resolveDefaultLogoDataUrl(): string | null {
+    if (this.defaultLogoDataUrl !== null) return this.defaultLogoDataUrl;
+
+    // Your recent upload was added under: backend/fonts/images/logo.png
+    const candidates = [
+      path.resolve(process.cwd(), 'backend', 'fonts', 'images', 'logo.png'),
+      path.resolve(process.cwd(), 'backend', 'images', 'logo.png'),
+      path.resolve(__dirname, '../../fonts/images/logo.png'),
+      path.resolve(__dirname, '../../images/logo.png'),
+    ];
+
+    for (const p of candidates) {
+      try {
+        if (!fs.existsSync(p)) continue;
+        const buf = fs.readFileSync(p);
+        // Template expects a data URL.
+        this.defaultLogoDataUrl = `data:image/png;base64,${buf.toString('base64')}`;
+        return this.defaultLogoDataUrl;
+      } catch {
+        // try next candidate
+      }
+    }
+
+    this.defaultLogoDataUrl = null;
+    return null;
   }
 
   private buildEmbeddedFontsCss(): string {
@@ -173,6 +201,11 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
   }): Promise<PdfResult> {
     const embeddedFontsCss = this.buildEmbeddedFontsCss();
 
+    const logoDataUrl =
+      params.company.logo && String(params.company.logo).trim().length > 0
+        ? toDataUrlIfBase64Png(params.company.logo)
+        : this.resolveDefaultLogoDataUrl();
+
     const input: InvoicePdfTemplateInput = {
       ...mapInvoiceToTemplateInput({
         invoice: params.invoice,
@@ -183,7 +216,7 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
         qrDataUrl: toDataUrlIfBase64Png((params.invoice as any)?.qrCode),
       }),
       embeddedFontsCss,
-      logoDataUrl: params.company.logo ?? null,
+      logoDataUrl,
     };
 
     const html = renderZatcaInvoiceHtml(input);
