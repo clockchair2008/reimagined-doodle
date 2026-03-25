@@ -175,13 +175,21 @@ export class CreditNotesService {
     note.xmlContent = xmlContent;
 
     const storagePath = this.configService.get<string>('STORAGE_PATH', './storage');
-    const xmlPath = path.join(storagePath, 'xml', `${note.noteNumber}.xml`);
+    const xmlPath = path.join(
+      storagePath,
+      'xml',
+      `${note.companyId}-${note.noteNumber}.xml`,
+    );
     const xmlDir = path.dirname(xmlPath);
     if (!fs.existsSync(xmlDir)) fs.mkdirSync(xmlDir, { recursive: true });
     fs.writeFileSync(xmlPath, xmlContent, 'utf-8');
     note.xmlPath = xmlPath;
 
-    const pdfPath = path.join(storagePath, 'pdf', `${note.noteNumber}.pdf`);
+    const pdfPath = path.join(
+      storagePath,
+      'pdf',
+      `${note.companyId}-${note.noteNumber}.pdf`,
+    );
     const pdfDir = path.dirname(pdfPath);
     if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
     await this.pdfGeneratorService.generateCreditNotePDF(note, company, customer, pdfPath);
@@ -219,7 +227,10 @@ export class CreditNotesService {
     }
     const storagePath = this.configService.get<string>('STORAGE_PATH', './storage');
     const allowedDir = path.resolve(storagePath, 'pdf');
-    const expectedPath = path.resolve(allowedDir, `${note.noteNumber}.pdf`);
+    const expectedPath = path.resolve(
+      allowedDir,
+      `${note.companyId}-${note.noteNumber}.pdf`,
+    );
     const resolvedPath = note.pdfPath ? path.resolve(note.pdfPath) : expectedPath;
     if (!resolvedPath.startsWith(allowedDir + path.sep)) {
       throw new BadRequestException('Invalid PDF path');

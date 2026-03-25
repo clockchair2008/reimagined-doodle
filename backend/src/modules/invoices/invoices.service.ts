@@ -297,7 +297,7 @@ export class InvoicesService {
         const xmlPath = path.join(
           storagePath,
           'xml',
-          `${invoice.invoiceNumber}.xml`,
+          `${invoice.companyId}-${invoice.invoiceNumber}.xml`,
         );
         const xmlDir = path.dirname(xmlPath);
         if (!fs.existsSync(xmlDir)) {
@@ -324,7 +324,7 @@ export class InvoicesService {
         const pdfPath = path.join(
           storagePath,
           'pdf',
-          `${invoice.invoiceNumber}.pdf`,
+          `${invoice.companyId}-${invoice.invoiceNumber}.pdf`,
         );
         const pdfDir = path.dirname(pdfPath);
         if (!fs.existsSync(pdfDir)) {
@@ -433,7 +433,11 @@ export class InvoicesService {
     }
     let xmlPath = invoice.xmlPath;
     const storagePath = this.configService.get<string>('STORAGE_PATH', './storage');
-    const expectedXmlPath = path.join(storagePath, 'xml', `${invoice.invoiceNumber}.xml`);
+    const expectedXmlPath = path.join(
+      storagePath,
+      'xml',
+      `${invoice.companyId}-${invoice.invoiceNumber}.xml`,
+    );
 
     if (!invoice.xmlContent) {
       throw new BadRequestException(
@@ -462,7 +466,10 @@ export class InvoicesService {
 
     const storagePath = this.configService.get<string>('STORAGE_PATH', './storage');
     const allowedDir = path.resolve(storagePath, 'pdf');
-    const expectedPath = path.resolve(allowedDir, `${invoice.invoiceNumber}.pdf`);
+    const expectedPath = path.resolve(
+      allowedDir,
+      `${invoice.companyId}-${invoice.invoiceNumber}.pdf`,
+    );
     const resolvedPath = invoice.pdfPath ? path.resolve(invoice.pdfPath) : expectedPath;
     if (!resolvedPath.startsWith(allowedDir + path.sep)) {
       throw new BadRequestException('Invalid PDF path');

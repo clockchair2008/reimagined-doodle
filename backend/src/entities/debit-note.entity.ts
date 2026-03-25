@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  Index,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
@@ -20,12 +21,13 @@ export enum DebitNoteStatus {
   CANCELLED = 'cancelled',
 }
 
+@Index('UQ_debit_notes_companyId_noteNumber', ['companyId', 'noteNumber'], { unique: true })
 @Entity('debit_notes')
 export class DebitNote {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100 })
   noteNumber: string;
 
   @Column({ type: 'timestamp' })

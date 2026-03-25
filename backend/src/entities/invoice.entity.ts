@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  Index,
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
@@ -19,12 +20,13 @@ export enum InvoiceStatus {
   CANCELLED = 'cancelled',
 }
 
+@Index('UQ_invoices_companyId_invoiceNumber', ['companyId', 'invoiceNumber'], { unique: true })
 @Entity('invoices')
 export class Invoice {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100 })
   invoiceNumber: string;
 
   @Column({ type: 'timestamp' })
