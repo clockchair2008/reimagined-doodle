@@ -9,8 +9,12 @@ import { InvoiceItem } from '../entities/invoice-item.entity';
 import * as fs from 'fs';
 import * as path from 'path';
 
-/** Arabic Rial Sign (U+FDFC) — used in KSA invoices instead of “SAR” */
-const RIYAL = '\uFDFC';
+/**
+ * Riyal currency label.
+ * Use text form instead of the single glyph (U+FDFC) because the glyph may not
+ * be supported by the registered Arabic font, causing it to render as blank.
+ */
+const RIYAL = 'ر.س';
 
 // Bilingual labels aligned with common ZATCA bilingual invoice samples
 const LABELS = {
@@ -65,7 +69,7 @@ function formatMoneyNumber(value: number): string {
 }
 
 function riyalAmount(value: number): string {
-  // Match your existing INV-6.pdf formatting: number then Riyal sign (no space)
+  // Match sample formatting: number followed by the Riyal label (no extra space).
   return `${formatMoneyNumber(value)}${RIYAL}`;
 }
 
@@ -148,8 +152,14 @@ export class PdfGeneratorService {
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
 
-      const fontPath = path.resolve(process.cwd(), 'fonts', 'Amiri-Regular.ttf');
-      const hasAmiri = fs.existsSync(fontPath);
+      // Resolve font regardless of server working directory (common in prod).
+      const fontCandidates = [
+        path.resolve(process.cwd(), 'fonts', 'Amiri-Regular.ttf'),
+        path.resolve(process.cwd(), 'backend', 'fonts', 'Amiri-Regular.ttf'),
+        path.resolve(__dirname, '../../fonts/Amiri-Regular.ttf'),
+      ];
+      const fontPath = fontCandidates.find((p) => fs.existsSync(p)) || '';
+      const hasAmiri = !!fontPath;
       if (hasAmiri) {
         doc.registerFont('Amiri', fontPath);
         doc.font('Amiri');
@@ -193,24 +203,9 @@ export class PdfGeneratorService {
       const logoX = midColX + (third - logoSize) / 2;
       if (logoBuf) {
         try {
-          const cx = logoX + logoSize / 2;
-          const cy = headerTop + logoSize / 2;
-          doc.save();
-          doc
-            .circle(cx, cy, logoSize / 2)
-            .clip();
+          // Render logo as-is (no clipping). The logo itself already contains the
+          // circular styling in the reference PDF.
           doc.image(logoBuf, logoX, headerTop, { width: logoSize, height: logoSize });
-          doc.restore();
-          doc
-            .circle(cx, cy, logoSize / 2)
-            .lineWidth(0.5)
-            .strokeColor('#d1d5db')
-            .stroke();
-          doc
-            .circle(cx, cy, logoSize / 2)
-            .lineWidth(0.3)
-            .strokeColor('#000000')
-            .stroke();
         } catch {
           /* ignore */
         }
@@ -243,10 +238,11 @@ export class PdfGeneratorService {
 
       // —— Title ——
       doc.fontSize(20).fillColor('#111827');
-      doc.text(`${docTypeLabel.en} ${hasAmiri ? docTypeLabel.ar : ''}`.trim(), pageLeft, y, {
-        width: contentWidth,
-        align: 'center',
-      });
+      doc.text(docTypeLabel.en, pageLeft, y, { width: contentWidth, align: 'center' });
+      y = doc.y + 2;
+      if (hasAmiri) {
+        doc.fontSize(18).text(docTypeLabel.ar, pageLeft, y, { width: contentWidth, align: 'center' });
+      }
       y = doc.y + 14;
 
       // —— Customer & invoice info (boxed grid) ——
@@ -388,7 +384,8 @@ export class PdfGeneratorService {
       y += 12;
 
       // —— QR (B2C only) + totals ——
-      const showInvoiceQr = customer.type === 'B2C' && invoice.qrCode;
+      // Render QR whenever the stored invoice has QR data (matches the reference PDFs).
+      const showInvoiceQr = !!invoice.qrCode;
       const qrSize = 96;
       const totalsWidth = Math.min(240, Math.floor(contentWidth * 0.42));
       const totalsX = pageRight - totalsWidth;
@@ -398,14 +395,12 @@ export class PdfGeneratorService {
         try {
           const base64Data = invoice.qrCode.replace(/^data:image\/png;base64,/, '');
           const imageBuffer = Buffer.from(base64Data, 'base64');
-          // Your sample image prints the QR twice (stacked vertically)
-          const qr1Y = y;
-          const qr2Y = y + qrSize + 6;
-          doc.image(imageBuffer, qrBlockLeft, qr1Y, { fit: [qrSize, qrSize] });
-          doc.image(imageBuffer, qrBlockLeft, qr2Y, { fit: [qrSize, qrSize] });
+
+          // Draw single QR code (matches your 2nd reference image).
+          doc.image(imageBuffer, qrBlockLeft, y, { fit: [qrSize, qrSize] });
 
           doc.fontSize(7).fillColor('#4b5563');
-          const noteY = qr2Y + qrSize + 4;
+          const noteY = y + qrSize + 4;
           doc.text(LABELS.zatcaQrNote.en, qrBlockLeft, noteY, {
             width: qrSize + 120,
             align: 'left',
@@ -446,8 +441,10 @@ export class PdfGeneratorService {
       doc.text(riyalAmount(total), totalsX, ty, { width: totalsWidth, align: 'right' });
       ty += 22;
 
-      // Adjust for stacked QR + note height on the left side.
-      const qrBlockBottom = showInvoiceQr ? y + qrSize * 2 + 10 + (hasAmiri ? 32 : 18) : ty;
+      // Adjust for QR + note height on the left side.
+      const qrBlockBottom = showInvoiceQr
+        ? y + qrSize + 10 + (hasAmiri ? 32 : 18)
+        : ty;
       y = Math.max(ty, qrBlockBottom) + 8;
 
       const amountWords = amountToArabicWords(total);
@@ -529,8 +526,13 @@ export class PdfGeneratorService {
       const stream = fs.createWriteStream(outputPath);
       pdf.pipe(stream);
 
-      const fontPath = path.resolve(process.cwd(), 'fonts', 'Amiri-Regular.ttf');
-      const hasAmiri = fs.existsSync(fontPath);
+      const fontCandidates = [
+        path.resolve(process.cwd(), 'fonts', 'Amiri-Regular.ttf'),
+        path.resolve(process.cwd(), 'backend', 'fonts', 'Amiri-Regular.ttf'),
+        path.resolve(__dirname, '../../fonts/Amiri-Regular.ttf'),
+      ];
+      const fontPath = fontCandidates.find((p) => fs.existsSync(p)) || '';
+      const hasAmiri = !!fontPath;
       if (hasAmiri) {
         pdf.registerFont('Amiri', fontPath);
         pdf.font('Amiri');
