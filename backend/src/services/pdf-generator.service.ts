@@ -57,8 +57,16 @@ const LABELS = {
   crAr: 'رقم السجل التجاري',
 };
 
+function formatMoneyNumber(value: number): string {
+  return Number(value).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
 function riyalAmount(value: number): string {
-  return `${RIYAL} ${value.toFixed(2)}`;
+  // Match your existing INV-6.pdf formatting: number then Riyal sign (no space)
+  return `${formatMoneyNumber(value)}${RIYAL}`;
 }
 
 function formatInvoiceDate(d: Date): string {
@@ -78,7 +86,8 @@ function formatCustomerAddress(c: Customer): string {
 }
 
 function bilingualFieldLabel(en: string, ar: string, hasAmiri: boolean): string {
-  return hasAmiri ? `${en} / ${ar}` : en;
+  // Match your existing INV-6.pdf extracted text: Arabic first, then "/ English"
+  return hasAmiri ? `${ar} / ${en}` : en;
 }
 
 function decodeLogoBuffer(logo: string | null | undefined): Buffer | null {
@@ -184,13 +193,24 @@ export class PdfGeneratorService {
       const logoX = midColX + (third - logoSize) / 2;
       if (logoBuf) {
         try {
-          doc.image(logoBuf, logoX, headerTop, { fit: [logoSize, logoSize] });
+          const cx = logoX + logoSize / 2;
+          const cy = headerTop + logoSize / 2;
+          doc.save();
           doc
+            .circle(cx, cy, logoSize / 2)
+            .clip();
+          doc.image(logoBuf, logoX, headerTop, { width: logoSize, height: logoSize });
+          doc.restore();
+          doc
+            .circle(cx, cy, logoSize / 2)
             .lineWidth(0.5)
             .strokeColor('#d1d5db')
-            .roundedRect(logoX, headerTop, logoSize, logoSize, logoSize / 2)
-            .stroke()
-            .strokeColor('#000000');
+            .stroke();
+          doc
+            .circle(cx, cy, logoSize / 2)
+            .lineWidth(0.3)
+            .strokeColor('#000000')
+            .stroke();
         } catch {
           /* ignore */
         }
@@ -212,6 +232,14 @@ export class PdfGeneratorService {
 
       const headerBlockH = Math.max(logoSize + 4, lineGap * 4 + 8);
       let y = headerTop + headerBlockH + 8;
+
+      // Divider line above the title (matches your sample)
+      doc
+        .moveTo(pageLeft, y - 6)
+        .lineTo(pageRight, y - 6)
+        .lineWidth(1)
+        .strokeColor('#e5e7eb')
+        .stroke();
 
       // —— Title ——
       doc.fontSize(20).fillColor('#111827');
@@ -275,23 +303,48 @@ export class PdfGeneratorService {
       const xLine = xVat + colVat;
 
       const headerRowH = 28;
-      doc.save();
-      doc.fillColor('#f3f4f6').rect(pageLeft, y, contentWidth, headerRowH).fill();
-      doc.restore();
-      doc.fillColor('#000000').fontSize(8);
-      doc.text(LABELS.no.en, xNo, y + 6, { width: colNo, align: 'center' });
-      const hdrDesc = hasAmiri ? `${LABELS.itemName.en} ${LABELS.itemName.ar}` : LABELS.itemName.en;
-      doc.text(hdrDesc, xDesc, y + 6, { width: colDesc });
-      const hdrQty = hasAmiri ? `${LABELS.quantity.en} ${LABELS.quantity.ar}` : LABELS.quantity.en;
-      doc.text(hdrQty, xQty, y + 6, { width: colQty, align: 'right' });
-      const hdrPrice = hasAmiri ? `${LABELS.price.en} ${LABELS.price.ar}` : LABELS.price.en;
-      doc.text(hdrPrice, xPrice, y + 6, { width: colPrice, align: 'right' });
-      const hdrTax = hasAmiri ? `${LABELS.taxableAmount.en} ${LABELS.taxableAmount.ar}` : LABELS.taxableAmount.en;
-      doc.text(hdrTax, xTaxable, y + 4, { width: colTaxable, align: 'right' });
-      const hdrVatCol = hasAmiri ? `${LABELS.vatColumn.en} ${LABELS.vatColumn.ar}` : LABELS.vatColumn.en;
-      doc.text(hdrVatCol, xVat, y + 4, { width: colVat, align: 'right' });
-      const hdrLine = hasAmiri ? `${LABELS.total.en} ${LABELS.total.ar}` : LABELS.total.en;
-      doc.text(hdrLine, xLine, y + 6, { width: colLine, align: 'right' });
+      const tableTop = y;
+      doc.fillColor('#000000').fontSize(7);
+      doc.text(hasAmiri ? `${LABELS.no.en}\n${LABELS.no.ar}` : LABELS.no.en, xNo, y + 6, {
+        width: colNo,
+        align: 'center',
+      });
+      doc.text(
+        hasAmiri ? `${LABELS.itemName.en}\n${LABELS.itemName.ar}` : LABELS.itemName.en,
+        xDesc,
+        y + 6,
+        { width: colDesc },
+      );
+      doc.text(
+        hasAmiri ? `${LABELS.quantity.en}\n${LABELS.quantity.ar}` : LABELS.quantity.en,
+        xQty,
+        y + 6,
+        { width: colQty, align: 'right' },
+      );
+      doc.text(
+        hasAmiri ? `${LABELS.price.en}\n${LABELS.price.ar}` : LABELS.price.en,
+        xPrice,
+        y + 6,
+        { width: colPrice, align: 'right' },
+      );
+      doc.text(
+        hasAmiri ? `${LABELS.taxableAmount.en}\n${LABELS.taxableAmount.ar}` : LABELS.taxableAmount.en,
+        xTaxable,
+        y + 6,
+        { width: colTaxable, align: 'right' },
+      );
+      doc.text(
+        hasAmiri ? `${LABELS.vatColumn.en}\n${LABELS.vatColumn.ar}` : LABELS.vatColumn.en,
+        xVat,
+        y + 6,
+        { width: colVat, align: 'right' },
+      );
+      doc.text(
+        hasAmiri ? `${LABELS.total.en}\n${LABELS.total.ar}` : LABELS.total.en,
+        xLine,
+        y + 6,
+        { width: colLine, align: 'right' },
+      );
 
       doc.lineWidth(0.5).strokeColor('#9ca3af');
       doc.moveTo(pageLeft, y + headerRowH).lineTo(pageRight, y + headerRowH).stroke();
@@ -309,16 +362,28 @@ export class PdfGeneratorService {
         doc.text(String(idx + 1), xNo, rowTop + 2, { width: colNo, align: 'center' });
         doc.text(item.name, xDesc, rowTop + 2, { width: colDesc });
         doc.text(String(item.quantity), xQty, rowTop + 2, { width: colQty, align: 'right' });
-        doc.text(Number(item.unitPrice).toFixed(2), xPrice, rowTop + 2, { width: colPrice, align: 'right' });
-        doc.text(taxable.toFixed(2), xTaxable, rowTop + 2, { width: colTaxable, align: 'right' });
-        doc.text(vatAmt.toFixed(2), xVat, rowTop + 2, { width: colVat, align: 'right' });
+        doc.text(formatMoneyNumber(Number(item.unitPrice)), xPrice, rowTop + 2, { width: colPrice, align: 'right' });
+        doc.text(formatMoneyNumber(taxable), xTaxable, rowTop + 2, { width: colTaxable, align: 'right' });
+        doc.text(formatMoneyNumber(vatAmt), xVat, rowTop + 2, { width: colVat, align: 'right' });
         doc.fontSize(7).fillColor('#4b5563');
         doc.text(`${rate}%`, xVat, rowTop + 12, { width: colVat, align: 'right' });
         doc.fillColor('#000000').fontSize(9);
-        doc.text(lineTot.toFixed(2), xLine, rowTop + 2, { width: colLine, align: 'right' });
+        doc.text(formatMoneyNumber(lineTot), xLine, rowTop + 2, { width: colLine, align: 'right' });
         y += 26;
         doc.moveTo(pageLeft, y).lineTo(pageRight, y).strokeColor('#e5e7eb').stroke().strokeColor('#000000');
       });
+
+      const tableBottom = y;
+      // Add vertical separators + outer border (matches the boxed table look in your reference)
+      doc.lineWidth(0.5).strokeColor('#d1d5db');
+      const xRight = pageRight;
+      const verticalXs = [xNo, xDesc, xQty, xPrice, xTaxable, xVat, xLine, xRight];
+      verticalXs.forEach((x) => {
+        doc.moveTo(x, tableTop).lineTo(x, tableBottom).stroke();
+      });
+      doc.moveTo(pageLeft, tableTop).lineTo(pageRight, tableTop).stroke();
+      doc.moveTo(pageLeft, tableBottom).lineTo(pageRight, tableBottom).stroke();
+      doc.strokeColor('#000000');
 
       y += 12;
 
@@ -333,12 +398,23 @@ export class PdfGeneratorService {
         try {
           const base64Data = invoice.qrCode.replace(/^data:image\/png;base64,/, '');
           const imageBuffer = Buffer.from(base64Data, 'base64');
-          doc.image(imageBuffer, qrBlockLeft, y, { fit: [qrSize, qrSize] });
+          // Your sample image prints the QR twice (stacked vertically)
+          const qr1Y = y;
+          const qr2Y = y + qrSize + 6;
+          doc.image(imageBuffer, qrBlockLeft, qr1Y, { fit: [qrSize, qrSize] });
+          doc.image(imageBuffer, qrBlockLeft, qr2Y, { fit: [qrSize, qrSize] });
+
           doc.fontSize(7).fillColor('#4b5563');
-          const noteY = y + qrSize + 4;
-          doc.text(LABELS.zatcaQrNote.en, qrBlockLeft, noteY, { width: qrSize + 120, align: 'left' });
+          const noteY = qr2Y + qrSize + 4;
+          doc.text(LABELS.zatcaQrNote.en, qrBlockLeft, noteY, {
+            width: qrSize + 120,
+            align: 'left',
+          });
           if (hasAmiri) {
-            doc.text(LABELS.zatcaQrNote.ar, qrBlockLeft, doc.y + 2, { width: qrSize + 160, align: 'left' });
+            doc.text(LABELS.zatcaQrNote.ar, qrBlockLeft, doc.y + 2, {
+              width: qrSize + 160,
+              align: 'left',
+            });
           }
           doc.fillColor('#000000');
         } catch {
@@ -353,24 +429,25 @@ export class PdfGeneratorService {
       const totalsTop = y;
       doc.fontSize(10);
       let ty = totalsTop;
-      doc.text(hasAmiri ? `${LABELS.subtotal.en} ${LABELS.subtotal.ar}` : LABELS.subtotal.en, totalsX, ty, {
+      doc.text(hasAmiri ? `${LABELS.subtotal.ar} ${LABELS.subtotal.en}` : LABELS.subtotal.en, totalsX, ty, {
         width: totalsWidth - 72,
       });
       doc.text(riyalAmount(subtotal), totalsX, ty, { width: totalsWidth, align: 'right' });
       ty += 16;
-      doc.text(hasAmiri ? `${LABELS.vatAmount.en} ${LABELS.vatAmount.ar}` : LABELS.vatAmount.en, totalsX, ty, {
+      doc.text(hasAmiri ? `${LABELS.vatAmount.ar} ${LABELS.vatAmount.en}` : LABELS.vatAmount.en, totalsX, ty, {
         width: totalsWidth - 72,
       });
       doc.text(riyalAmount(vatAmount), totalsX, ty, { width: totalsWidth, align: 'right' });
       ty += 16;
       doc.fontSize(11);
-      doc.text(hasAmiri ? `${LABELS.totalAmount.en} ${LABELS.totalAmount.ar}` : LABELS.totalAmount.en, totalsX, ty, {
+      doc.text(hasAmiri ? `${LABELS.totalAmount.ar} ${LABELS.totalAmount.en}` : LABELS.totalAmount.en, totalsX, ty, {
         width: totalsWidth - 72,
       });
       doc.text(riyalAmount(total), totalsX, ty, { width: totalsWidth, align: 'right' });
       ty += 22;
 
-      const qrBlockBottom = showInvoiceQr ? y + qrSize + (hasAmiri ? 52 : 34) : ty;
+      // Adjust for stacked QR + note height on the left side.
+      const qrBlockBottom = showInvoiceQr ? y + qrSize * 2 + 10 + (hasAmiri ? 32 : 18) : ty;
       y = Math.max(ty, qrBlockBottom) + 8;
 
       const amountWords = amountToArabicWords(total);
