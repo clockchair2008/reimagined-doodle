@@ -11,10 +11,11 @@ import * as path from 'path';
 
 /**
  * Riyal currency label.
- * Use text form instead of the single glyph (U+FDFC) because the glyph may not
- * be supported by the registered Arabic font, causing it to render as blank.
+ * If a font that contains the official Riyal glyph is available, we use it.
+ * Otherwise we fall back to a printable Arabic text label.
  */
-const RIYAL = 'ر.س';
+const RIYAL_OFFICIAL_GLYPH = '⃁';
+const RIYAL_FALLBACK_TEXT = 'ر.س';
 
 // Bilingual labels aligned with common ZATCA bilingual invoice samples
 const LABELS = {
@@ -68,9 +69,10 @@ function formatMoneyNumber(value: number): string {
   });
 }
 
-function riyalAmount(value: number): string {
+function riyalAmount(value: number, useOfficialGlyph: boolean): string {
   // Match sample formatting: number followed by the Riyal label (no extra space).
-  return `${formatMoneyNumber(value)}${RIYAL}`;
+  const sign = useOfficialGlyph ? RIYAL_OFFICIAL_GLYPH : RIYAL_FALLBACK_TEXT;
+  return `${formatMoneyNumber(value)}${sign}`;
 }
 
 function formatInvoiceDate(d: Date): string {
@@ -133,6 +135,41 @@ interface DocumentForPdf {
 @Injectable()
 export class PdfGeneratorService {
   /**
+   * Attempt to register a font that contains the official Riyal glyph.
+   * This avoids blank/unknown glyphs when the primary Arabic font doesn't include it.
+   */
+  private tryRegisterSaudiRiyalFont(doc: any): boolean {
+    const candidateDirs = [
+      path.resolve(process.cwd(), 'backend', 'fonts'),
+      path.resolve(process.cwd(), 'fonts'),
+      path.resolve(__dirname, '../../fonts'),
+    ];
+
+    for (const dir of candidateDirs) {
+      try {
+        if (!fs.existsSync(dir)) continue;
+        const files = fs.readdirSync(dir);
+        const match =
+          files.find(
+            (f) =>
+              f.toLowerCase().endsWith('.ttf') &&
+              (f.toLowerCase().includes('riyal') ||
+                f.toLowerCase().includes('saudi')),
+          ) || null;
+
+        if (!match) continue;
+
+        const fontPath = path.join(dir, match);
+        doc.registerFont('SaudiRiyal', fontPath);
+        return true;
+      } catch {
+        // ignore and try next dir
+      }
+    }
+    return false;
+  }
+
+  /**
    * Generate PDF for invoice or note. documentTypeLabel: e.g. "Tax Invoice", "Simplified Tax Invoice", "Credit Note", "Debit Note".
    */
   async generateInvoicePDF(
@@ -160,6 +197,7 @@ export class PdfGeneratorService {
       ];
       const fontPath = fontCandidates.find((p) => fs.existsSync(p)) || '';
       const hasAmiri = !!fontPath;
+      const hasSaudiRiyalFont = this.tryRegisterSaudiRiyalFont(doc);
       if (hasAmiri) {
         doc.registerFont('Amiri', fontPath);
         doc.font('Amiri');
@@ -427,18 +465,24 @@ export class PdfGeneratorService {
       doc.text(hasAmiri ? `${LABELS.subtotal.ar} ${LABELS.subtotal.en}` : LABELS.subtotal.en, totalsX, ty, {
         width: totalsWidth - 72,
       });
-      doc.text(riyalAmount(subtotal), totalsX, ty, { width: totalsWidth, align: 'right' });
+      if (hasSaudiRiyalFont) doc.font('SaudiRiyal');
+      doc.text(riyalAmount(subtotal, hasSaudiRiyalFont), totalsX, ty, { width: totalsWidth, align: 'right' });
+      if (hasAmiri) doc.font('Amiri');
       ty += 16;
       doc.text(hasAmiri ? `${LABELS.vatAmount.ar} ${LABELS.vatAmount.en}` : LABELS.vatAmount.en, totalsX, ty, {
         width: totalsWidth - 72,
       });
-      doc.text(riyalAmount(vatAmount), totalsX, ty, { width: totalsWidth, align: 'right' });
+      if (hasSaudiRiyalFont) doc.font('SaudiRiyal');
+      doc.text(riyalAmount(vatAmount, hasSaudiRiyalFont), totalsX, ty, { width: totalsWidth, align: 'right' });
+      if (hasAmiri) doc.font('Amiri');
       ty += 16;
       doc.fontSize(11);
       doc.text(hasAmiri ? `${LABELS.totalAmount.ar} ${LABELS.totalAmount.en}` : LABELS.totalAmount.en, totalsX, ty, {
         width: totalsWidth - 72,
       });
-      doc.text(riyalAmount(total), totalsX, ty, { width: totalsWidth, align: 'right' });
+      if (hasSaudiRiyalFont) doc.font('SaudiRiyal');
+      doc.text(riyalAmount(total, hasSaudiRiyalFont), totalsX, ty, { width: totalsWidth, align: 'right' });
+      if (hasAmiri) doc.font('Amiri');
       ty += 22;
 
       // Adjust for QR + note height on the left side.
@@ -538,6 +582,8 @@ export class PdfGeneratorService {
         pdf.font('Amiri');
       }
 
+      const hasSaudiRiyalFont = this.tryRegisterSaudiRiyalFont(pdf);
+
       const docTypeLabel =
         documentTypeLabel.toLowerCase().includes('credit')
           ? LABELS.creditNote
@@ -582,17 +628,29 @@ export class PdfGeneratorService {
       });
       y += 10;
       pdf.text(hasAmiri ? `${LABELS.subtotal.en} / ${LABELS.subtotal.ar}` : LABELS.subtotal.en, 350, y);
-      pdf.text(riyalAmount(doc.subtotal), 480, y);
+      if (hasSaudiRiyalFont) pdf.font('SaudiRiyal');
+      pdf.text(riyalAmount(doc.subtotal, hasSaudiRiyalFont), 480, y);
+      if (hasAmiri) pdf.font('Amiri');
       y += 15;
       pdf.text(hasAmiri ? `${LABELS.vatAmount.en} / ${LABELS.vatAmount.ar}` : LABELS.vatAmount.en, 350, y);
-      pdf.text(riyalAmount(doc.vatAmount), 480, y);
+      if (hasSaudiRiyalFont) pdf.font('SaudiRiyal');
+      pdf.text(riyalAmount(doc.vatAmount, hasSaudiRiyalFont), 480, y);
+      if (hasAmiri) pdf.font('Amiri');
       y += 15;
       pdf.fontSize(12).text(hasAmiri ? `${LABELS.totalAmount.en} / ${LABELS.totalAmount.ar}` : LABELS.totalAmount.en, 350, y);
-      pdf.fontSize(12).text(riyalAmount(doc.totalAmount), 480, y);
+      if (hasSaudiRiyalFont) pdf.font('SaudiRiyal');
+      pdf.fontSize(12).text(riyalAmount(doc.totalAmount, hasSaudiRiyalFont), 480, y);
+      if (hasAmiri) pdf.font('Amiri');
       y += 20;
       const amountWords = amountToArabicWords(doc.totalAmount);
       pdf.fontSize(11);
-      pdf.text(hasAmiri ? `${LABELS.amountInWords.ar}: ${amountWords}` : `Amount: ${riyalAmount(doc.totalAmount)}`, 50, y);
+      if (!hasAmiri) {
+        if (hasSaudiRiyalFont) pdf.font('SaudiRiyal');
+        pdf.text(`Amount: ${riyalAmount(doc.totalAmount, hasSaudiRiyalFont)}`, 50, y);
+        if (hasAmiri) pdf.font('Amiri');
+      } else {
+        pdf.text(`${LABELS.amountInWords.ar}: ${amountWords}`, 50, y);
+      }
       if (doc.qrCode) {
         pdf.moveDown(2);
         pdf.fontSize(10).text(hasAmiri ? `${LABELS.zatcaQr.en} / ${LABELS.zatcaQr.ar}` : LABELS.zatcaQr.en, { align: 'center' });
