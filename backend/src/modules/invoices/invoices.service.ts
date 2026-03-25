@@ -258,23 +258,22 @@ export class InvoicesService {
       invoice.previousHash = previousHash;
       invoice.currentHash = currentHash;
 
-      // QR only for simplified (B2C) invoices; clear for B2B
+      // Generate QR for both B2B and B2C.
+      // (Existing qrCodeService produces TLV QR data; we persist it so the PDF can render it.)
       invoice.qrCode = null;
       invoice.qrCodeData = null;
-      if (customer.type === 'B2C') {
-        try {
-          const qrCode = await this.qrCodeService.generateInvoiceQRCode(
-            company.name,
-            company.vatNumber,
-            invoice.issueDateTime,
-            invoice.totalAmount,
-            invoice.vatAmount,
-          );
-          invoice.qrCode = qrCode.image;
-          invoice.qrCodeData = qrCode.tlvData;
-        } catch (error) {
-          console.error('Error generating QR code:', error);
-        }
+      try {
+        const qrCode = await this.qrCodeService.generateInvoiceQRCode(
+          company.name,
+          company.vatNumber,
+          invoice.issueDateTime,
+          invoice.totalAmount,
+          invoice.vatAmount,
+        );
+        invoice.qrCode = qrCode.image;
+        invoice.qrCodeData = qrCode.tlvData;
+      } catch (error) {
+        console.error('Error generating QR code:', error);
       }
 
       // ZATCA Phase 1: ProfileID 01 = standard (B2B), 02 = simplified (B2C)
@@ -355,7 +354,6 @@ export class InvoicesService {
         currentHash: currentHash,
       };
 
-      // B2B: persist null QR; B2C: persist generated QR
       updateData.qrCode = invoice.qrCode;
       updateData.qrCodeData = invoice.qrCodeData;
 

@@ -153,22 +153,21 @@ export class DebitNotesService {
     note.previousHash = previousHash;
     note.currentHash = currentHash;
 
+    // Generate QR for both B2B and B2C so PDF rendering includes it.
     note.qrCode = null;
     note.qrCodeData = null;
-    if (customer.type === 'B2C') {
-      try {
-        const qr = await this.qrCodeService.generateInvoiceQRCode(
-          company.name,
-          company.vatNumber,
-          note.issueDateTime,
-          Number(note.totalAmount),
-          Number(note.vatAmount),
-        );
-        note.qrCode = qr.image;
-        note.qrCodeData = qr.tlvData;
-      } catch (e) {
-        console.error('Debit note QR error:', e);
-      }
+    try {
+      const qr = await this.qrCodeService.generateInvoiceQRCode(
+        company.name,
+        company.vatNumber,
+        note.issueDateTime,
+        Number(note.totalAmount),
+        Number(note.vatAmount),
+      );
+      note.qrCode = qr.image;
+      note.qrCodeData = qr.tlvData;
+    } catch (e) {
+      console.error('Debit note QR error:', e);
     }
 
     const xmlContent = this.xmlGeneratorService.generateUBLDebitNote(note, company, customer);
