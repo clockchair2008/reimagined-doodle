@@ -15,12 +15,12 @@ import * as path from 'path';
  * Otherwise we fall back to a printable Arabic text label.
  */
 const RIYAL_OFFICIAL_GLYPH = '⃁';
-const RIYAL_FALLBACK_TEXT = 'ر.س';
+const RIYAL_FALLBACK_TEXT =  '⃁'
 
 // Bilingual labels aligned with common ZATCA bilingual invoice samples
 const LABELS = {
   taxInvoice: { en: 'Tax Invoice', ar: 'فاتورة ضريبية' },
-  simplifiedTaxInvoice: { en: 'Simplified Tax Invoice', ar: 'فاتورة ضريبية مبسطة' },
+  simplifiedTaxInvoice: { en: ' Tax Invoice', ar: 'فاتورة ضريبية مبسطة' },
   creditNote: { en: 'Credit Note', ar: 'إشعار دائن' },
   debitNote: { en: 'Debit Note', ar: 'إشعار مدين' },
   invoiceNo: { en: 'Invoice number', ar: 'رقم الفاتورة' },
@@ -71,6 +71,7 @@ function formatMoneyNumber(value: number): string {
 
 function riyalAmount(value: number, useOfficialGlyph: boolean): string {
   // Match sample formatting: number followed by the Riyal label (no extra space).
+  // Per request: prefer the official symbol `⃁` whenever possible.
   const sign = useOfficialGlyph ? RIYAL_OFFICIAL_GLYPH : RIYAL_FALLBACK_TEXT;
   return `${formatMoneyNumber(value)}${sign}`;
 }
@@ -169,6 +170,35 @@ export class PdfGeneratorService {
     return false;
   }
 
+  private stampFooterOnAllPages(params: {
+    doc: any;
+    companyName: string;
+    rightText: string;
+    footerText: string;
+  }) {
+    const { doc, companyName, rightText, footerText } = params;
+    const range = doc.bufferedPageRange();
+    for (let i = range.start; i < range.start + range.count; i++) {
+      doc.switchToPage(i);
+      const pageLeft = doc.page.margins.left;
+      const pageRight = doc.page.width - doc.page.margins.right;
+      const pageBottom = doc.page.height - doc.page.margins.bottom;
+      const contentWidth = pageRight - pageLeft;
+      const footY = pageBottom - 28;
+
+      doc.save();
+      doc.fontSize(8).fillColor('#9ca3af');
+      doc.text(companyName, pageLeft, footY, { width: contentWidth, align: 'center' });
+      doc.text(`Page ${i + 1} - ${rightText}`, pageLeft, footY, {
+        width: contentWidth,
+        align: 'right',
+      });
+      doc.fillColor('#6b7280');
+      doc.text(footerText, pageLeft, footY + 12, { width: contentWidth, align: 'center' });
+      doc.restore();
+    }
+  }
+
   /**
    * Generate PDF for invoice or note. documentTypeLabel: e.g. "Tax Invoice", "Simplified Tax Invoice", "Credit Note", "Debit Note".
    */
@@ -185,7 +215,7 @@ export class PdfGeneratorService {
         fs.mkdirSync(dir, { recursive: true });
       }
 
-      const doc = new PDFDocument({ margin: 48, size: 'A4' });
+      const doc = new PDFDocument({ margin: 48, size: 'A4', bufferPages: true });
       const stream = fs.createWriteStream(outputPath);
       doc.pipe(stream);
 
@@ -498,20 +528,13 @@ export class PdfGeneratorService {
       });
       doc.fillColor('#000000');
 
-      // —— Footer: company center, page + invoice right ——
-      const footY = pageBottom - 28;
-      doc.fontSize(8).fillColor('#9ca3af');
-      doc.text(company.name, pageLeft, footY, { width: contentWidth, align: 'center' });
-      doc.text(`Page 1 of 1 - ${invoice.invoiceNumber}`, pageLeft, footY, {
-        width: contentWidth,
-        align: 'right',
+      // Stamp footer on all pages so it never ends up alone on a blank last page.
+      this.stampFooterOnAllPages({
+        doc,
+        companyName: company.name,
+        rightText: invoice.invoiceNumber,
+        footerText: hasAmiri ? `${LABELS.footer.en} | ${LABELS.footer.ar}` : LABELS.footer.en,
       });
-      doc.fillColor('#6b7280');
-      doc.text(hasAmiri ? `${LABELS.footer.en} | ${LABELS.footer.ar}` : LABELS.footer.en, pageLeft, footY + 12, {
-        width: contentWidth,
-        align: 'center',
-      });
-      doc.fillColor('#000000');
 
       doc.end();
 
@@ -566,7 +589,7 @@ export class PdfGeneratorService {
     return new Promise((resolve, reject) => {
       const dir = path.dirname(outputPath);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      const pdf = new PDFDocument({ margin: 50, size: 'A4' });
+      const pdf = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true });
       const stream = fs.createWriteStream(outputPath);
       pdf.pipe(stream);
 
@@ -657,7 +680,12 @@ export class PdfGeneratorService {
         const base64 = doc.qrCode.replace(/^data:image\/png;base64,/, '');
         pdf.image(Buffer.from(base64, 'base64'), { fit: [150, 150], align: 'center' });
       }
-      pdf.fontSize(8).text(hasAmiri ? `${LABELS.footer.en} | ${LABELS.footer.ar}` : LABELS.footer.en, { align: 'center' }, pdf.page.height - 50);
+      this.stampFooterOnAllPages({
+        doc: pdf,
+        companyName: company.name,
+        rightText: docNumber,
+        footerText: hasAmiri ? `${LABELS.footer.en} | ${LABELS.footer.ar}` : LABELS.footer.en,
+      });
       pdf.end();
       stream.on('finish', () => resolve(outputPath));
       stream.on('error', reject);
