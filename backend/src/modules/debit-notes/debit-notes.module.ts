@@ -14,7 +14,7 @@ import { QrCodeService } from '../../services/qr-code.service';
 import { HashChainService } from '../../services/hash-chain.service';
 import { InvoiceSequenceService } from '../../services/invoice-sequence.service';
 import { XmlGeneratorService } from '../../services/xml-generator.service';
-import { PdfGeneratorService } from '../../services/pdf-generator.service';
+import { PuppeteerPdfService } from '../../services/puppeteer-pdf.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 
 @Module({
@@ -37,7 +37,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
     HashChainService,
     InvoiceSequenceService,
     XmlGeneratorService,
-    PdfGeneratorService,
+    PuppeteerPdfService,
     AuditLogsService,
   ],
   exports: [DebitNotesService],

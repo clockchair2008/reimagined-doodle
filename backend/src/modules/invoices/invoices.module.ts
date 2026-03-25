@@ -13,7 +13,7 @@ import { QrCodeService } from '../../services/qr-code.service';
 import { HashChainService } from '../../services/hash-chain.service';
 import { InvoiceSequenceService } from '../../services/invoice-sequence.service';
 import { XmlGeneratorService } from '../../services/xml-generator.service';
-import { PdfGeneratorService } from '../../services/pdf-generator.service';
+import { PuppeteerPdfService } from '../../services/puppeteer-pdf.service';
 import { ZatcaSdkService } from '../../services/zatca-sdk.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditLog } from '../../entities/audit-log.entity';
@@ -38,7 +38,7 @@ import { AuditLog } from '../../entities/audit-log.entity';
     HashChainService,
     InvoiceSequenceService,
     XmlGeneratorService,
-    PdfGeneratorService,
+    PuppeteerPdfService,
     ZatcaSdkService,
     AuditLogsService,
   ],

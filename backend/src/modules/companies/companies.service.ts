@@ -13,7 +13,10 @@ export class CompaniesService {
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
-    const company = this.companyRepository.create(createCompanyDto);
+    // Ignore incoming logo uploads/updates.
+    // Frontend may still send `logo`, but we don't persist it here.
+    const { logo: _logo, ...rest } = createCompanyDto as any;
+    const company = this.companyRepository.create(rest as any) as unknown as Company;
     return await this.companyRepository.save(company);
   }
 
@@ -34,7 +37,9 @@ export class CompaniesService {
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto): Promise<Company> {
     const company = await this.findOne(id);
-    Object.assign(company, updateCompanyDto);
+    // Ignore incoming logo updates (keep existing logo).
+    const { logo: _logo, ...rest } = updateCompanyDto as any;
+    Object.assign(company, rest);
     return await this.companyRepository.save(company);
   }
 

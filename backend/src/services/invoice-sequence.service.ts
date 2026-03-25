@@ -35,9 +35,9 @@ export class InvoiceSequenceService {
           'max',
         )
         .where('i.companyId = :companyId', { companyId })
-        .getRawOne<{ max: string }>();
+        .getRawOne();
 
-      const maxExistingInvoiceNumber = Number(maxExistingInvoiceNumberRow?.max ?? 0);
+      const maxExistingInvoiceNumber = Number((maxExistingInvoiceNumberRow as any)?.max ?? 0);
 
       if (!seq) {
         seq = em.create(InvoiceSequence, {
@@ -80,10 +80,10 @@ export class InvoiceSequenceService {
           'max',
         )
         .where('n.companyId = :companyId', { companyId })
-        .getRawOne<{ max: string }>();
+        .getRawOne();
 
       const maxExistingCreditNoteNumber = Number(
-        maxExistingCreditNoteNumberRow?.max ?? 0,
+        (maxExistingCreditNoteNumberRow as any)?.max ?? 0,
       );
 
       if (!seq) {
@@ -126,9 +126,9 @@ export class InvoiceSequenceService {
           'max',
         )
         .where('n.companyId = :companyId', { companyId })
-        .getRawOne<{ max: string }>();
+        .getRawOne();
 
-      const maxExistingDebitNoteNumber = Number(maxExistingDebitNoteNumberRow?.max ?? 0);
+      const maxExistingDebitNoteNumber = Number((maxExistingDebitNoteNumberRow as any)?.max ?? 0);
 
       if (!seq) {
         seq = em.create(InvoiceSequence, {

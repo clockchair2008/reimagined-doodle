@@ -1,0 +1,540 @@
+import type { Company } from '../../entities/company.entity';
+import type { Customer } from '../../entities/customer.entity';
+import type { Invoice } from '../../entities/invoice.entity';
+
+type DocumentKind = 'invoice' | 'credit_note' | 'debit_note';
+
+export type InvoicePdfTemplateInput = {
+  kind: DocumentKind;
+  titleEn: string;
+  titleAr: string;
+  company: Company;
+  customer: Customer;
+  documentNumber: string;
+  issueDate: string; // YYYY-MM-DD
+  dueDate?: string; // YYYY-MM-DD
+  orderNumber?: string;
+  items: Array<{
+    description: string;
+    qty: number;
+    price: number;
+    taxableAmount: number;
+    vatAmount: number;
+    vatRate: number;
+    lineAmount: number;
+  }>;
+  subtotal: number;
+  vatTotal: number;
+  total: number;
+  logoDataUrl?: string | null;
+  qrDataUrl?: string | null;
+  footerRightText?: string;
+  // Inline @font-face rules that embed fonts as base64.
+  embeddedFontsCss?: string;
+};
+
+function escapeHtml(input: any): string {
+  const s = String(input ?? '');
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function money(n: number): string {
+  const x = Number(n ?? 0);
+  return x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Official Riyal symbol glyph (requires a font that supports it)
+const RIYAL = '⃁';
+
+export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
+  const embeddedFontsCss = input.embeddedFontsCss ?? '';
+  const logoHtml = input.logoDataUrl
+    ? `<img class="logo" src="${escapeHtml(input.logoDataUrl)}" alt="logo" />`
+    : `<div class="logo-placeholder"></div>`;
+
+  const qrHtml = input.qrDataUrl
+    ? `
+      <div class="qr">
+        <img src="${escapeHtml(input.qrDataUrl)}" alt="qr" />
+        <div class="qr-note">
+          <div class="qr-note-en">This QR code is encoded as per ZATCA e-invoicing requirements</div>
+          <div class="qr-note-ar" dir="rtl">تم ترميز هذا الرمز وفقاً لمتطلبات هيئة الزكاة والضريبة والجمارك للفواتير الإلكترونية</div>
+        </div>
+      </div>
+    `
+    : '';
+
+  const issueDate = escapeHtml(input.issueDate);
+  const dueDate = escapeHtml(input.dueDate ?? input.issueDate);
+  const orderNumber = escapeHtml(input.orderNumber ?? '—');
+
+  const customerVat = escapeHtml((input.customer as any)?.vatNumber ?? '—');
+  const customerAddr = escapeHtml(
+    [
+      (input.customer as any)?.address,
+      (input.customer as any)?.streetName,
+      (input.customer as any)?.buildingNumber,
+      (input.customer as any)?.citySubdivisionName,
+      (input.customer as any)?.city,
+      (input.customer as any)?.postalCode,
+      (input.customer as any)?.country,
+    ]
+      .filter(Boolean)
+      .join(', ') || '—',
+  );
+
+  const companyCountryEn = escapeHtml((input.company as any)?.country || 'Kingdom of Saudi Arabia');
+  const companyCountryAr = 'المملكة العربية السعودية';
+
+  const companyVat = escapeHtml((input.company as any)?.vatNumber ?? '');
+  const companyCr = escapeHtml((input.company as any)?.commercialRegistration ?? '');
+
+  const rightFooter = escapeHtml(input.footerRightText ?? input.documentNumber);
+
+  const rowsHtml = input.items
+    .map((it, idx) => {
+      return `
+        <tr>
+          <td class="c-no">${idx + 1}</td>
+          <td class="c-desc">
+            <div class="desc-en">${escapeHtml(it.description)}</div>
+          </td>
+          <td class="c-num">${escapeHtml(it.qty)}</td>
+          <td class="c-num">${money(it.price)}</td>
+          <td class="c-num">${money(it.taxableAmount)}</td>
+          <td class="c-num">
+            <div>${money(it.vatAmount)}</div>
+            <div class="muted">${escapeHtml(it.vatRate)}%</div>
+          </td>
+          <td class="c-num">${money(it.lineAmount)}</td>
+        </tr>
+      `;
+    })
+    .join('\n');
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      ${embeddedFontsCss}
+
+      :root {
+        --border: #cfd6de;
+        --grid: #d7dee6;
+        --text: #111827;
+        --muted: #6b7280;
+        --bg: #ffffff;
+      }
+
+      @page {
+        size: A4;
+        margin: 20mm 18mm 20mm 18mm;
+      }
+
+      html, body {
+        background: var(--bg);
+        color: var(--text);
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-family: "Noto Sans Arabic", "Noto Naskh Arabic", "Amiri", Arial, sans-serif;
+        font-size: 11px;
+      }
+
+      .page {
+        position: relative;
+        min-height: 100%;
+      }
+
+      .header {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: start;
+        column-gap: 18px;
+        margin-top: 2mm;
+      }
+      .header .block {
+        font-size: 10px;
+        line-height: 1.35;
+      }
+      .header .block h1 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .header .block .line { margin: 2px 0; }
+      .header .block.right { text-align: right; direction: rtl; }
+      .logo {
+        width: 76px;
+        height: 76px;
+        object-fit: contain;
+        display: block;
+      }
+      .logo-placeholder {
+        width: 76px;
+        height: 76px;
+      }
+
+      .divider {
+        margin: 10px 0 14px;
+        border-top: 2px solid var(--grid);
+      }
+
+      .title {
+        text-align: center;
+        margin: 0 0 10px;
+      }
+      .title .en {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 0;
+      }
+      .title .ar {
+        font-size: 22px;
+        font-weight: 700;
+        margin: 2px 0 0;
+        direction: rtl;
+      }
+
+      .info-box {
+        border: 1px solid var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 6px;
+      }
+      .info-grid {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .info-grid td {
+        border-bottom: 1px solid var(--border);
+        padding: 6px 8px;
+        vertical-align: middle;
+      }
+      .info-grid tr:last-child td { border-bottom: none; }
+      .info-grid td.label {
+        width: 40%;
+        font-weight: 600;
+        background: #f9fafb;
+      }
+      .bilingual-label {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1px;
+      }
+      .bilingual-label .ar { direction: rtl; text-align: right; font-weight: 600; }
+      .bilingual-label .en { direction: ltr; text-align: left; font-weight: 600; }
+      .info-grid td.value {
+        width: 60%;
+      }
+
+      .items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        border: 1px solid var(--border);
+      }
+      .items th, .items td {
+        border-bottom: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+        padding: 6px 7px;
+        vertical-align: top;
+      }
+      .items th:last-child, .items td:last-child { border-right: none; }
+      .items thead th {
+        background: #f9fafb;
+        font-size: 10px;
+        font-weight: 700;
+      }
+      .th-bi {
+        display: grid;
+        gap: 1px;
+      }
+      .th-bi .ar { direction: rtl; text-align: right; }
+      .th-bi .en { direction: ltr; text-align: left; }
+      .c-no { width: 26px; text-align: center; }
+      .c-desc { width: 40%; }
+      .c-num { text-align: right; white-space: nowrap; }
+      .muted { color: var(--muted); font-size: 9px; margin-top: 2px; }
+
+      .bottom {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 16px;
+        margin-top: 10px;
+        align-items: start;
+      }
+
+      .totals {
+        width: 100%;
+      }
+      .totals .row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        padding: 4px 0;
+        border-bottom: 0;
+      }
+      .totals .label {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .totals .label .ar { direction: rtl; text-align: right; font-weight: 700; }
+      .totals .label .en { direction: ltr; text-align: left; font-weight: 700; }
+      .totals .value {
+        font-weight: 700;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .totals .value .currency {
+        font-family: "SaudiRiyal", "Noto Sans Arabic", "Noto Naskh Arabic", "Amiri", Arial, sans-serif;
+      }
+
+      .qr img {
+        width: 120px;
+        height: 120px;
+        object-fit: contain;
+        border: 0;
+      }
+      .qr-note { margin-top: 6px; max-width: 260px; }
+      .qr-note-en { color: var(--muted); font-size: 9px; }
+      .qr-note-ar { color: var(--muted); font-size: 9px; margin-top: 2px; }
+
+      .footer {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 8mm;
+        font-size: 9px;
+        color: var(--muted);
+      }
+      .footer .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+      }
+      .footer .center { text-align: center; }
+      .footer .right { text-align: right; }
+      .footer .small {
+        margin-top: 4px;
+        text-align: center;
+        font-size: 8.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div class="block left">
+          <h1>${escapeHtml(input.company.name)}</h1>
+          <div class="line">${companyCountryEn}</div>
+          <div class="line">VAT number ${companyVat}</div>
+          <div class="line">CR Number ${companyCr || '—'}</div>
+        </div>
+        <div class="block center">
+          ${logoHtml}
+        </div>
+        <div class="block right">
+          <h1 dir="rtl">${escapeHtml(input.company.name)}</h1>
+          <div class="line">${companyCountryAr}</div>
+          <div class="line" dir="rtl">رقم التسجيل الضريبي ${companyVat}</div>
+          <div class="line" dir="rtl">رقم السجل التجاري ${companyCr || '—'}</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="title">
+        <div class="en">${escapeHtml(input.titleEn)}</div>
+        <div class="ar" dir="rtl">${escapeHtml(input.titleAr)}</div>
+      </div>
+
+      <div class="info-box">
+        <table class="info-grid">
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">Customer</div>
+                <div class="ar" dir="rtl">العميل</div>
+              </div>
+            </td>
+            <td class="value">${escapeHtml(input.customer.name)}</td>
+          </tr>
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">Address</div>
+                <div class="ar" dir="rtl">العنوان</div>
+              </div>
+            </td>
+            <td class="value">${customerAddr}</td>
+          </tr>
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">VAT number</div>
+                <div class="ar" dir="rtl">رقم التسجيل الضريبي</div>
+              </div>
+            </td>
+            <td class="value">${customerVat}</td>
+          </tr>
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">Invoice number</div>
+                <div class="ar" dir="rtl">رقم الفاتورة</div>
+              </div>
+            </td>
+            <td class="value">${escapeHtml(input.documentNumber)}</td>
+          </tr>
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">Date</div>
+                <div class="ar" dir="rtl">التاريخ</div>
+              </div>
+            </td>
+            <td class="value">${issueDate}</td>
+          </tr>
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">Due date</div>
+                <div class="ar" dir="rtl">تاريخ الاستحقاق</div>
+              </div>
+            </td>
+            <td class="value">${dueDate}</td>
+          </tr>
+          <tr>
+            <td class="label">
+              <div class="bilingual-label">
+                <div class="en">Order number</div>
+                <div class="ar" dir="rtl">رقم أمر الشراء</div>
+              </div>
+            </td>
+            <td class="value">${orderNumber}</td>
+          </tr>
+        </table>
+      </div>
+
+      <table class="items">
+        <thead>
+          <tr>
+            <th class="c-no"><div class="th-bi"><div class="en">#</div><div class="ar" dir="rtl">#</div></div></th>
+            <th class="c-desc"><div class="th-bi"><div class="en">Description</div><div class="ar" dir="rtl">الوصف</div></div></th>
+            <th class="c-num"><div class="th-bi"><div class="en">Qty</div><div class="ar" dir="rtl">الكمية</div></div></th>
+            <th class="c-num"><div class="th-bi"><div class="en">Price</div><div class="ar" dir="rtl">السعر</div></div></th>
+            <th class="c-num"><div class="th-bi"><div class="en">Taxable amount</div><div class="ar" dir="rtl">المبلغ الخاضع للضريبة</div></div></th>
+            <th class="c-num"><div class="th-bi"><div class="en">VAT amount</div><div class="ar" dir="rtl">القيمة المضافة</div></div></th>
+            <th class="c-num"><div class="th-bi"><div class="en">Line amount</div><div class="ar" dir="rtl">المجموع</div></div></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+
+      <div class="bottom">
+        <div>
+          ${qrHtml}
+        </div>
+
+        <div class="totals">
+          <div class="row">
+            <div class="label">
+              <div class="ar" dir="rtl">المجموع الفرعي</div>
+              <div class="en">Subtotal</div>
+            </div>
+            <div class="value"><span class="currency">${money(input.subtotal)}${RIYAL}</span></div>
+          </div>
+          <div class="row">
+            <div class="label">
+              <div class="ar" dir="rtl">إجمالي ضريبة القيمة المضافة</div>
+              <div class="en">Total VAT</div>
+            </div>
+            <div class="value"><span class="currency">${money(input.vatTotal)}${RIYAL}</span></div>
+          </div>
+          <div class="row">
+            <div class="label">
+              <div class="ar" dir="rtl">المجموع شامل القيمة المضافة</div>
+              <div class="en">Total</div>
+            </div>
+            <div class="value"><span class="currency">${money(input.total)}${RIYAL}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="row">
+          <div></div>
+          <div class="center">${escapeHtml(input.company.name)}</div>
+          <div class="right">${escapeHtml(rightFooter)}</div>
+        </div>
+        <div class="small">
+          Electronically generated invoice (ZATCA Phase 1). No signature required for print.
+          <span dir="rtl"> | فاتورة إلكترونية (مرحلة زاتكا 1). لا يتطلب توقيع للطباعة.</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+export function mapInvoiceToTemplateInput(params: {
+  invoice: Invoice;
+  company: Company;
+  customer: Customer;
+  titleEn: string;
+  titleAr: string;
+  qrDataUrl?: string | null;
+}): InvoicePdfTemplateInput {
+  const { invoice, company, customer, titleEn, titleAr, qrDataUrl } = params;
+  const issue = new Date(invoice.issueDateTime);
+  const issueDate = `${issue.getFullYear()}-${String(issue.getMonth() + 1).padStart(2, '0')}-${String(
+    issue.getDate(),
+  ).padStart(2, '0')}`;
+
+  const items = (invoice.items ?? []).map((it: any) => {
+    const qty = Number(it.quantity ?? 0);
+    const price = Number(it.unitPrice ?? 0);
+    const taxable = qty * price;
+    const vatAmount = Number(it.vatAmount ?? 0);
+    const vatRate = Number(it.vatRate ?? 0);
+    const lineAmount = Number(it.lineTotal ?? taxable + vatAmount);
+    return {
+      description: String(it.name ?? ''),
+      qty,
+      price,
+      taxableAmount: taxable,
+      vatAmount,
+      vatRate,
+      lineAmount,
+    };
+  });
+
+  return {
+    kind: 'invoice',
+    titleEn,
+    titleAr,
+    company,
+    customer,
+    documentNumber: invoice.invoiceNumber,
+    issueDate,
+    dueDate: issueDate,
+    orderNumber: '—',
+    items,
+    subtotal: Number(invoice.subtotal ?? 0),
+    vatTotal: Number(invoice.vatAmount ?? 0),
+    total: Number(invoice.totalAmount ?? 0),
+    logoDataUrl: (company as any)?.logo ?? null,
+    qrDataUrl: qrDataUrl ?? (invoice as any)?.qrCode ?? null,
+    footerRightText: invoice.invoiceNumber,
+  };
+}
+

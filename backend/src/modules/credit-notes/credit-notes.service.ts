@@ -13,7 +13,7 @@ import { QrCodeService } from '../../services/qr-code.service';
 import { HashChainService } from '../../services/hash-chain.service';
 import { InvoiceSequenceService } from '../../services/invoice-sequence.service';
 import { XmlGeneratorService } from '../../services/xml-generator.service';
-import { PdfGeneratorService } from '../../services/pdf-generator.service';
+import { PuppeteerPdfService } from '../../services/puppeteer-pdf.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction } from '../../entities/audit-log.entity';
 import * as path from 'path';
@@ -33,7 +33,7 @@ export class CreditNotesService {
     private hashChainService: HashChainService,
     private invoiceSequenceService: InvoiceSequenceService,
     private xmlGeneratorService: XmlGeneratorService,
-    private pdfGeneratorService: PdfGeneratorService,
+    private pdfService: PuppeteerPdfService,
     private auditLogsService: AuditLogsService,
     private configService: ConfigService,
   ) {}
@@ -192,7 +192,24 @@ export class CreditNotesService {
     );
     const pdfDir = path.dirname(pdfPath);
     if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
-    await this.pdfGeneratorService.generateCreditNotePDF(note, company, customer, pdfPath);
+    // Reuse the invoice-style template for notes (bilingual ZATCA-style)
+    const fakeInvoice: any = {
+      invoiceNumber: note.noteNumber,
+      issueDateTime: note.issueDateTime,
+      subtotal: note.subtotal,
+      vatAmount: note.vatAmount,
+      totalAmount: note.totalAmount,
+      items: note.items,
+      qrCode: note.qrCode,
+    };
+    const { buffer } = await this.pdfService.generateInvoicePdf({
+      invoice: fakeInvoice,
+      company,
+      customer,
+      titleEn: 'Credit Note',
+      titleAr: 'إشعار دائن',
+    });
+    await this.pdfService.writePdfToPath(buffer, pdfPath);
     note.pdfPath = pdfPath;
 
     await this.creditNoteRepository.update(id, {
@@ -240,12 +257,23 @@ export class CreditNotesService {
     if (!note.pdfPath || !fs.existsSync(resolvedPath)) {
       const dir = path.dirname(expectedPath);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-      await this.pdfGeneratorService.generateCreditNotePDF(
-        note,
-        note.company,
-        note.customer,
-        expectedPath,
-      );
+      const fakeInvoice: any = {
+        invoiceNumber: note.noteNumber,
+        issueDateTime: note.issueDateTime,
+        subtotal: note.subtotal,
+        vatAmount: note.vatAmount,
+        totalAmount: note.totalAmount,
+        items: note.items,
+        qrCode: note.qrCode,
+      };
+      const { buffer } = await this.pdfService.generateInvoicePdf({
+        invoice: fakeInvoice,
+        company: note.company,
+        customer: note.customer,
+        titleEn: 'Credit Note',
+        titleAr: 'إشعار دائن',
+      });
+      await this.pdfService.writePdfToPath(buffer, expectedPath);
       await this.creditNoteRepository.update(id, { pdfPath: expectedPath });
       if (!fs.existsSync(expectedPath)) {
         throw new NotFoundException('PDF file not found on disk');

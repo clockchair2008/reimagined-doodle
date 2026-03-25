@@ -19,7 +19,7 @@ import { QrCodeService } from '../../services/qr-code.service';
 import { HashChainService } from '../../services/hash-chain.service';
 import { InvoiceSequenceService } from '../../services/invoice-sequence.service';
 import { XmlGeneratorService } from '../../services/xml-generator.service';
-import { PdfGeneratorService } from '../../services/pdf-generator.service';
+import { PuppeteerPdfService } from '../../services/puppeteer-pdf.service';
 import { ZatcaSdkService, ZatcaValidationResult } from '../../services/zatca-sdk.service';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction } from '../../entities/audit-log.entity';
@@ -42,7 +42,7 @@ export class InvoicesService {
     private hashChainService: HashChainService,
     private invoiceSequenceService: InvoiceSequenceService,
     private xmlGeneratorService: XmlGeneratorService,
-    private pdfGeneratorService: PdfGeneratorService,
+    private pdfService: PuppeteerPdfService,
     private zatcaSdkService: ZatcaSdkService,
     private auditLogsService: AuditLogsService,
     private configService: ConfigService,
@@ -330,13 +330,17 @@ export class InvoicesService {
         if (!fs.existsSync(pdfDir)) {
           fs.mkdirSync(pdfDir, { recursive: true });
         }
-        await this.pdfGeneratorService.generateInvoicePDF(
+        const isSimplified = customer.type === 'B2C';
+        const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
+        const titleAr = isSimplified ? 'فاتورة ضريبية مبسطة' : 'فاتورة ضريبية';
+        const { buffer } = await this.pdfService.generateInvoicePdf({
           invoice,
           company,
           customer,
-          pdfPath,
-          documentTypeLabel,
-        );
+          titleEn,
+          titleAr,
+        });
+        await this.pdfService.writePdfToPath(buffer, pdfPath);
         invoice.pdfPath = pdfPath;
       } catch (error) {
         console.error('Error generating PDF:', error);
@@ -481,15 +485,17 @@ export class InvoicesService {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-      const documentTypeLabel =
-        invoice.customer?.type === 'B2C' ? 'Simplified Tax Invoice' : 'Tax Invoice';
-      await this.pdfGeneratorService.generateInvoicePDF(
-        invoice,
-        invoice.company,
-        invoice.customer,
-        expectedPath,
-        documentTypeLabel,
-      );
+        const isSimplified = invoice.customer?.type === 'B2C';
+        const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
+        const titleAr = isSimplified ? 'فاتورة ضريبية مبسطة' : 'فاتورة ضريبية';
+        const { buffer } = await this.pdfService.generateInvoicePdf({
+          invoice,
+          company: invoice.company,
+          customer: invoice.customer,
+          titleEn,
+          titleAr,
+        });
+        await this.pdfService.writePdfToPath(buffer, expectedPath);
       await this.invoiceRepository.update(id, { pdfPath: expectedPath });
       if (!fs.existsSync(expectedPath)) {
         throw new NotFoundException('PDF file not found on disk');
