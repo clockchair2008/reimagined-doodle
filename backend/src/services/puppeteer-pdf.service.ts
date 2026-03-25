@@ -57,75 +57,55 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
   }
 
   private buildEmbeddedFontsCss(): string {
-    // Put fonts under backend/fonts/
-    const candidates = [
-      {
-        family: 'Noto Sans Arabic',
-        file: 'NotoSansArabic-Regular.ttf',
-        weight: 400,
-      },
-      {
-        family: 'Noto Naskh Arabic',
-        file: 'NotoNaskhArabic-Regular.ttf',
-        weight: 400,
-      },
-      {
-        family: 'Amiri',
-        file: 'Amiri-Regular.ttf',
-        weight: 400,
-      },
-      // Saudi Riyal symbol font (Sep 2025) – any filename containing "riyal" or "saudi"
-      {
-        family: 'SaudiRiyal',
-        file: 'saudi_riyal.ttf',
-        weight: 400,
-      },
-    ];
-
+    // Embed fonts from backend/fonts (server-side) so Chromium doesn't miss glyphs.
     const dirs = [
       path.resolve(process.cwd(), 'backend', 'fonts'),
       path.resolve(process.cwd(), 'fonts'),
       path.resolve(__dirname, '../../fonts'),
     ];
 
+    const backendFontsDir = path.resolve(process.cwd(), 'backend', 'fonts');
+    const availableTtfNames =
+      fs.existsSync(backendFontsDir) ? fs.readdirSync(backendFontsDir).filter((f) => f.toLowerCase().endsWith('.ttf')) : [];
+
+    const pickFontFile = (matchers: string[]): string | null => {
+      const lower = availableTtfNames.map((n) => n.toLowerCase());
+      for (const matcher of matchers) {
+        const idx = lower.findIndex((n) => n.includes(matcher.toLowerCase()));
+        if (idx >= 0) return availableTtfNames[idx];
+      }
+      return null;
+    };
+
+    const families = [
+      // Arabic text shaping fonts (optional; keep for stability)
+      { family: 'Noto Sans Arabic', match: ['NotoSansArabic', 'Noto Sans Arabic', 'SansArabic'], weight: 400 },
+      { family: 'Noto Naskh Arabic', match: ['NotoNaskhArabic', 'Noto Naskh Arabic', 'NaskhArabic'], weight: 400 },
+      { family: 'Amiri', match: ['Amiri-Regular', 'Amiri'], weight: 400 },
+
+      // Riyal / symbol fonts: these are what we need for U+20C1 "⃁"
+      { family: 'SaudiRiyal', match: ['riyal', 'saudi_riyal', 'saudi-riyal', 'saudi'], weight: 400 },
+      { family: 'Symbola', match: ['symbola'], weight: 400 },
+      { family: 'Noto Sans Symbols2', match: ['symbols2', 'Symbols2', 'NotoSansSymbols2'], weight: 400 },
+      { family: 'SaudiRiyalSymbol', match: ['riyal', 'saudi'], weight: 400 },
+    ];
+
     const rules: string[] = [];
 
-    for (const c of candidates) {
-      let base64: string | null = null;
-      for (const dir of dirs) {
-        const p = path.join(dir, c.file);
-        base64 = this.resolveFontBase64(p);
-        if (base64) break;
-      }
+    for (const f of families) {
+      // Find a matching font file from backend/fonts. If not present, we'll skip.
+      const file = pickFontFile(f.match);
+      if (!file) continue;
 
-      // Special: try to discover Saudi Riyal font by filename.
-      if (!base64 && c.family === 'SaudiRiyal') {
-        for (const dir of dirs) {
-          try {
-            if (!fs.existsSync(dir)) continue;
-            const ttf = fs
-              .readdirSync(dir)
-              .find(
-                (f) =>
-                  f.toLowerCase().endsWith('.ttf') &&
-                  (f.toLowerCase().includes('riyal') || f.toLowerCase().includes('saudi')),
-              );
-            if (!ttf) continue;
-            base64 = this.resolveFontBase64(path.join(dir, ttf));
-            if (base64) break;
-          } catch {
-            // ignore
-          }
-        }
-      }
-
+      const fontPath = path.join(backendFontsDir, file);
+      const base64 = this.resolveFontBase64(fontPath);
       if (!base64) continue;
 
       rules.push(`
 @font-face {
-  font-family: "${c.family}";
+  font-family: "${f.family}";
   font-style: normal;
-  font-weight: ${c.weight};
+  font-weight: ${f.weight};
   src: url(data:font/ttf;base64,${base64}) format("truetype");
 }
       `.trim());

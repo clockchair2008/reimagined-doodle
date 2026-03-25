@@ -296,6 +296,16 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         font-family: "SaudiRiyal", "Noto Sans Arabic", "Noto Naskh Arabic", "Amiri", Arial, sans-serif;
       }
 
+      /* U+20C1 is a combining-mark type symbol in many fonts.
+         Render it after a base character (dotted circle) to ensure it appears. */
+      .riyal-symbol {
+        font-family: "SaudiRiyal", "Symbola", "Noto Sans Symbols2", "Noto Sans Arabic", "Amiri", Arial, sans-serif;
+        white-space: nowrap;
+      }
+      .riyal-base {
+        color: transparent; /* keep base invisible but still present for combining */
+      }
+
       .qr img {
         width: 120px;
         height: 120px;
@@ -451,21 +461,21 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
               <div class="ar" dir="rtl">المجموع الفرعي</div>
               <div class="en">Subtotal</div>
             </div>
-            <div class="value"><span class="currency">${money(input.subtotal)}${RIYAL}</span></div>
+            <div class="value"><span class="currency">${money(input.subtotal)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
           <div class="row">
             <div class="label">
               <div class="ar" dir="rtl">إجمالي ضريبة القيمة المضافة</div>
               <div class="en">Total VAT</div>
             </div>
-            <div class="value"><span class="currency">${money(input.vatTotal)}${RIYAL}</span></div>
+            <div class="value"><span class="currency">${money(input.vatTotal)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
           <div class="row">
             <div class="label">
               <div class="ar" dir="rtl">المجموع شامل القيمة المضافة</div>
               <div class="en">Total</div>
             </div>
-            <div class="value"><span class="currency">${money(input.total)}${RIYAL}</span></div>
+            <div class="value"><span class="currency">${money(input.total)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
         </div>
       </div>
