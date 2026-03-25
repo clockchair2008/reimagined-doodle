@@ -64,15 +64,20 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
       path.resolve(__dirname, '../../fonts'),
     ];
 
-    const backendFontsDir = path.resolve(process.cwd(), 'backend', 'fonts');
-    const availableTtfNames =
-      fs.existsSync(backendFontsDir) ? fs.readdirSync(backendFontsDir).filter((f) => f.toLowerCase().endsWith('.ttf')) : [];
+    const fontFilesByDir: Array<{ dir: string; files: string[] }> = dirs
+      .filter((dir) => fs.existsSync(dir))
+      .map((dir) => ({
+        dir,
+        files: fs.readdirSync(dir).filter((f) => f.toLowerCase().endsWith('.ttf')),
+      }));
 
-    const pickFontFile = (matchers: string[]): string | null => {
-      const lower = availableTtfNames.map((n) => n.toLowerCase());
-      for (const matcher of matchers) {
-        const idx = lower.findIndex((n) => n.includes(matcher.toLowerCase()));
-        if (idx >= 0) return availableTtfNames[idx];
+    const pickFontPath = (matchers: string[]): string | null => {
+      for (const entry of fontFilesByDir) {
+        const lower = entry.files.map((n) => n.toLowerCase());
+        for (const matcher of matchers) {
+          const idx = lower.findIndex((n) => n.includes(matcher.toLowerCase()));
+          if (idx >= 0) return path.join(entry.dir, entry.files[idx]);
+        }
       }
       return null;
     };
@@ -93,11 +98,9 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
     const rules: string[] = [];
 
     for (const f of families) {
-      // Find a matching font file from backend/fonts. If not present, we'll skip.
-      const file = pickFontFile(f.match);
-      if (!file) continue;
-
-      const fontPath = path.join(backendFontsDir, file);
+      // Find a matching font file from any known fonts dir.
+      const fontPath = pickFontPath(f.match);
+      if (!fontPath) continue;
       const base64 = this.resolveFontBase64(fontPath);
       if (!base64) continue;
 
