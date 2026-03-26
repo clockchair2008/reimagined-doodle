@@ -159,8 +159,8 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         margin-top: 2mm;
       }
       .header .block {
-        font-size: 13px;
-        line-height: 1.4;
+        font-size: 10px;
+        line-height: 1.35;
         align-self: start;
         min-width: 0;
         margin: 0;
@@ -169,11 +169,16 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .header .block h1 {
         margin: 0;
         padding: 0;
-        font-size: 17px;
+        font-size: 13px;
         font-weight: 700;
         line-height: 1.2;
       }
-      .header .block .line { margin: 2px 0; }
+      /* Country, VAT, CR — larger as requested */
+      .header .block .line {
+        margin: 2px 0;
+        font-size: 18px;
+        line-height: 1.35;
+      }
       .header .block.right { text-align: right; direction: rtl; }
       /* Top-align logo with first line of left/right text (same row start) */
       .header .block.center {
@@ -185,16 +190,16 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         padding: 0;
       }
       .logo {
-        width: 120px;
-        height: 120px;
+        width: 99px;
+        height: 99px;
         object-fit: contain;
         display: block;
         margin: 0;
         padding: 0;
       }
       .logo-placeholder {
-        width: 120px;
-        height: 120px;
+        width: 99px;
+        height: 99px;
         flex-shrink: 0;
       }
 
@@ -204,21 +209,27 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
 
       .title {
-        text-align: center;
         margin: 0 0 10px;
       }
-      .title .en {
-        font-size: 32px;
+      /* EN + AR on one line, gap between (saves vertical space) */
+      .title.title-inline {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        column-gap: 28px;
+        row-gap: 6px;
+        text-align: center;
+      }
+      .title.title-inline .en,
+      .title.title-inline .ar {
+        font-size: 22px;
         font-weight: 700;
         margin: 0;
         line-height: 1.2;
       }
-      .title .ar {
-        font-size: 32px;
-        font-weight: 700;
-        margin: 6px 0 0;
+      .title.title-inline .ar {
         direction: rtl;
-        line-height: 1.2;
       }
 
       .info-box {
@@ -389,17 +400,16 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         object-fit: contain;
         border: 0;
       }
-      /* 1.3× prior caption size (9px); keep shared block width so AR sits under EN */
       .qr-note {
         margin-top: 6px;
-        max-width: 338px;
+        max-width: 260px;
         direction: ltr;
         text-align: left;
       }
       .qr-note-en,
       .qr-note-ar {
         color: var(--muted);
-        font-size: 11.7px;
+        font-size: 9px;
         line-height: 1.35;
         margin: 0;
         text-align: left;
@@ -457,9 +467,9 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       <div class="divider"></div>
 
-      <div class="title">
-        <div class="en">${escapeHtml(input.titleEn)}</div>
-        <div class="ar" dir="rtl">${escapeHtml(input.titleAr)}</div>
+      <div class="title title-inline">
+        <span class="en">${escapeHtml(input.titleEn)}</span>
+        <span class="ar" dir="rtl">${escapeHtml(input.titleAr)}</span>
       </div>
 
       <div class="info-box">
