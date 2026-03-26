@@ -534,7 +534,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       <table class="items">
         <thead>
           <tr>
-            <th class="c-no"><div class="th-bi"><div class="en">#</div><div class="ar" dir="rtl">#</div></div></th>
+            <th class="c-no">#</th>
             <th class="c-desc"><div class="th-bi"><div class="en">Description</div><div class="ar" dir="rtl">الوصف</div></div></th>
             <th class="c-num"><div class="th-bi"><div class="en">Qty</div><div class="ar" dir="rtl">الكمية</div></div></th>
             <th class="c-num"><div class="th-bi"><div class="en">Price</div><div class="ar" dir="rtl">السعر</div></div></th>
