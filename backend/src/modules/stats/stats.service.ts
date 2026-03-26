@@ -22,7 +22,8 @@ export class StatsService {
     invoiceCount: number;
   }> {
     const [companyCount, customerCount, invoiceCount] = await Promise.all([
-      this.companyRepository.count({ where: { isActive: true } }),
+      // Count all companies present in DB.
+      this.companyRepository.count(),
       this.customerRepository.count({ where: { isActive: true } }),
       this.invoiceRepository.count(),
     ]);
