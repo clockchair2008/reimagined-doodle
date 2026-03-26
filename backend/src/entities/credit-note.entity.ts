@@ -33,12 +33,12 @@ export class CreditNote {
   @Column({ type: 'timestamp' })
   issueDateTime: Date;
 
-  @Column({ type: 'uuid' })
-  companyId: string;
+  @Column({ type: 'uuid', nullable: true })
+  companyId: string | null;
 
-  @ManyToOne(() => Company)
+  @ManyToOne(() => Company, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'companyId' })
-  company: Company;
+  company: Company | null;
 
   @Column({ type: 'uuid' })
   customerId: string;

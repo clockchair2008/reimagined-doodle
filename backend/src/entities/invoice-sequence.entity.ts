@@ -19,7 +19,7 @@ export class InvoiceSequence {
   @Column({ type: 'uuid', unique: true })
   companyId: string;
 
-  @OneToOne(() => Company)
+  @OneToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'companyId' })
   company: Company;
 

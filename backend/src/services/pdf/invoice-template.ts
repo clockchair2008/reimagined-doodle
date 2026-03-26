@@ -179,7 +179,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .header .block h1 {
         margin: 0;
         padding: 0;
-        font-size: 13px;
+        font-size: 16px;
         font-weight: 700;
         line-height: 1.2;
       }
@@ -196,7 +196,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         justify-content: center;
         align-items: flex-start;
         align-self: start;
-        margin: -10px 0 0;
+        margin: -16px 0 0;
         padding: 0;
       }
       .logo {
