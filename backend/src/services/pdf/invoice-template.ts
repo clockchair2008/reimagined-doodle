@@ -365,18 +365,18 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
       .totals .row {
         display: grid;
-        grid-template-columns: 1fr 22px 110px;
-        column-gap: 8px;
+        grid-template-columns: minmax(0, 1fr) 18px 100px;
+        column-gap: 6px;
         padding: 4px 0;
         border-bottom: 0;
         align-items: center;
       }
       .totals .label {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: auto auto;
         align-items: center;
-        gap: 0 12px;
+        column-gap: 10px;
+        white-space: nowrap;
       }
       .totals .label .en {
         direction: ltr;
@@ -387,6 +387,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         direction: rtl;
         unicode-bidi: embed;
         font-weight: 700;
+        white-space: nowrap;
       }
       .totals .value {
         font-weight: 700;
