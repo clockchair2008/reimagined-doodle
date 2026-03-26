@@ -25,6 +25,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction } from '../../entities/audit-log.entity';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class InvoicesService {
@@ -86,6 +87,13 @@ export class InvoicesService {
     const vatAmount = items.reduce((sum, item) => sum + item.vatAmount, 0);
     const totalAmount = subtotal + vatAmount;
 
+    const issueDate = createInvoiceDto.issueDateTime
+      ? new Date(createInvoiceDto.issueDateTime)
+      : new Date();
+    const dateKey = issueDate.toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+    const suffix = crypto.randomUUID().replace(/-/g, '').slice(0, 8);
+    const generatedOrderNumber = `ORD-${dateKey}-${suffix}`;
+
     // ZATCA Phase 1: sequential per-company invoice number
     const invoiceNumber =
       createInvoiceDto.invoiceNumber ||
@@ -94,10 +102,11 @@ export class InvoicesService {
     // Create invoice
     const invoice = this.invoiceRepository.create({
       invoiceNumber,
-      issueDateTime: createInvoiceDto.issueDateTime || new Date(),
+      issueDateTime: issueDate,
       companyId: createInvoiceDto.companyId,
       customerId: createInvoiceDto.customerId,
-      orderNumber: createInvoiceDto.orderNumber,
+      // Always generate unique order number on backend (frontend should not control this).
+      orderNumber: generatedOrderNumber,
       subtotal,
       vatAmount,
       totalAmount,

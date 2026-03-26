@@ -10,27 +10,27 @@ export class AddInvoiceProtectionTriggers1700000000000
       RETURNS TRIGGER AS $$
       BEGIN
         -- Prevent any modification to issued/immutable invoices
-        IF OLD.immutable_flag = true OR OLD.status = 'issued' THEN
+        IF OLD."immutableFlag" = true OR OLD.status = 'issued' THEN
           -- Allow only update to updatedAt timestamp (automatic)
           IF (
-            NEW.immutable_flag != OLD.immutable_flag OR
+            NEW."immutableFlag" != OLD."immutableFlag" OR
             NEW.status != OLD.status OR
-            NEW.current_hash != OLD.current_hash OR
-            NEW.previous_hash != OLD.previous_hash OR
-            NEW.invoice_number != OLD.invoice_number OR
-            NEW.issue_date_time != OLD.issue_date_time OR
+            NEW."currentHash" != OLD."currentHash" OR
+            NEW."previousHash" != OLD."previousHash" OR
+            NEW."invoiceNumber" != OLD."invoiceNumber" OR
+            NEW."issueDateTime" != OLD."issueDateTime" OR
             NEW.subtotal != OLD.subtotal OR
-            NEW.vat_amount != OLD.vat_amount OR
-            NEW.total_amount != OLD.total_amount OR
-            NEW.company_id != OLD.company_id OR
-            NEW.customer_id != OLD.customer_id OR
-            NEW.xml_content != OLD.xml_content OR
-            NEW.xml_path != OLD.xml_path OR
-            NEW.pdf_path != OLD.pdf_path OR
-            NEW.qr_code != OLD.qr_code OR
-            NEW.qr_code_data != OLD.qr_code_data
+            NEW."vatAmount" != OLD."vatAmount" OR
+            NEW."totalAmount" != OLD."totalAmount" OR
+            NEW."companyId" != OLD."companyId" OR
+            NEW."customerId" != OLD."customerId" OR
+            NEW."xmlContent" != OLD."xmlContent" OR
+            NEW."xmlPath" != OLD."xmlPath" OR
+            NEW."pdfPath" != OLD."pdfPath" OR
+            NEW."qrCode" != OLD."qrCode" OR
+            NEW."qrCodeData" != OLD."qrCodeData"
           ) THEN
-            RAISE EXCEPTION 'Cannot modify issued invoice. Invoice ID: %, Invoice Number: %', OLD.id, OLD.invoice_number;
+            RAISE EXCEPTION 'Cannot modify issued invoice. Invoice ID: %, Invoice Number: %', OLD.id, OLD."invoiceNumber";
           END IF;
         END IF;
         RETURN NEW;
@@ -56,12 +56,12 @@ export class AddInvoiceProtectionTriggers1700000000000
         invoice_status VARCHAR;
       BEGIN
         -- Check if parent invoice is immutable or issued
-        SELECT immutable_flag, status INTO invoice_immutable, invoice_status
+        SELECT "immutableFlag", status INTO invoice_immutable, invoice_status
         FROM invoices
-        WHERE id = COALESCE(NEW.invoice_id, OLD.invoice_id);
+        WHERE id = COALESCE(NEW."invoiceId", OLD."invoiceId");
 
         IF invoice_immutable = true OR invoice_status = 'issued' THEN
-          RAISE EXCEPTION 'Cannot modify items of issued invoice. Invoice ID: %', COALESCE(NEW.invoice_id, OLD.invoice_id);
+          RAISE EXCEPTION 'Cannot modify items of issued invoice. Invoice ID: %', COALESCE(NEW."invoiceId", OLD."invoiceId");
         END IF;
 
         RETURN COALESCE(NEW, OLD);
@@ -95,8 +95,8 @@ export class AddInvoiceProtectionTriggers1700000000000
       ALTER TABLE invoices
       ADD CONSTRAINT check_immutable_integrity
       CHECK (
-        (immutable_flag = false AND status = 'draft') OR
-        (immutable_flag = true AND status = 'issued') OR
+        ("immutableFlag" = false AND status = 'draft') OR
+        ("immutableFlag" = true AND status = 'issued') OR
         (status = 'cancelled')
       );
     `);
@@ -109,7 +109,7 @@ export class AddInvoiceProtectionTriggers1700000000000
       ALTER TABLE invoices
       ADD CONSTRAINT check_hash_on_issued
       CHECK (
-        (status != 'issued' OR current_hash IS NOT NULL)
+        (status != 'issued' OR "currentHash" IS NOT NULL)
       );
     `);
   }

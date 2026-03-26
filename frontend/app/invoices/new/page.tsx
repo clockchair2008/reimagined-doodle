@@ -37,7 +37,6 @@ export default function NewInvoicePage() {
     companyId: '',
     customerId: '',
     issueDateTime: new Date().toISOString().split('T')[0],
-    orderNumber: '',
     items: [
       {
         name: '',
@@ -145,7 +144,6 @@ export default function NewInvoicePage() {
         companyId: formData.companyId,
         customerId: formData.customerId,
         issueDateTime: formData.issueDateTime || new Date().toISOString(),
-        orderNumber: formData.orderNumber || undefined,
         items: formData.items.map((item) => ({
           name: item.name,
           description: item.description || undefined,
@@ -264,18 +262,6 @@ export default function NewInvoicePage() {
 
           {/* Invoice Details */}
           <div className="mb-8 max-w-md">
-            <label htmlFor="orderNumber" className="block text-sm font-medium text-gray-700 mb-2">
-              Order number
-            </label>
-            <input
-              type="text"
-              id="orderNumber"
-              value={formData.orderNumber}
-              onChange={(e) => setFormData({ ...formData, orderNumber: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Optional"
-            />
-            <div className="h-4" />
             <label htmlFor="issueDateTime" className="block text-sm font-medium text-gray-700 mb-2">
               Issue Date <span className="text-red-500">*</span>
             </label>
