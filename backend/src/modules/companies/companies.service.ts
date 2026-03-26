@@ -30,7 +30,6 @@ export class CompaniesService {
 
   async findAll(): Promise<Company[]> {
     return await this.companyRepository.find({
-      where: { isActive: true },
       order: { createdAt: 'DESC' },
     });
   }
@@ -52,8 +51,17 @@ export class CompaniesService {
   }
 
   async remove(id: string): Promise<void> {
-    const company = await this.findOne(id);
-    company.isActive = false;
-    await this.companyRepository.save(company);
+    await this.findOne(id);
+    try {
+      await this.companyRepository.delete(id);
+    } catch (error: any) {
+      // Postgres foreign_key_violation: company is referenced by invoices/notes/etc.
+      if (error instanceof QueryFailedError && error?.driverError?.code === '23503') {
+        throw new ConflictException(
+          'Cannot delete company because it is linked to existing invoices or other records',
+        );
+      }
+      throw error;
+    }
   }
 }
