@@ -154,29 +154,48 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         display: grid;
         grid-template-columns: 1fr auto 1fr;
         align-items: start;
+        align-content: start;
         column-gap: 18px;
         margin-top: 2mm;
       }
       .header .block {
-        font-size: 10px;
-        line-height: 1.35;
+        font-size: 13px;
+        line-height: 1.4;
+        align-self: start;
+        min-width: 0;
+        margin: 0;
+        padding: 0;
       }
       .header .block h1 {
         margin: 0;
-        font-size: 13px;
+        padding: 0;
+        font-size: 17px;
         font-weight: 700;
+        line-height: 1.2;
       }
       .header .block .line { margin: 2px 0; }
       .header .block.right { text-align: right; direction: rtl; }
+      /* Top-align logo with first line of left/right text (same row start) */
+      .header .block.center {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        align-self: start;
+        margin: 0;
+        padding: 0;
+      }
       .logo {
-        width: 99px;
-        height: 99px;
+        width: 120px;
+        height: 120px;
         object-fit: contain;
         display: block;
+        margin: 0;
+        padding: 0;
       }
       .logo-placeholder {
-        width: 99px;
-        height: 99px;
+        width: 120px;
+        height: 120px;
+        flex-shrink: 0;
       }
 
       .divider {
@@ -189,15 +208,17 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         margin: 0 0 10px;
       }
       .title .en {
-        font-size: 22px;
+        font-size: 32px;
         font-weight: 700;
         margin: 0;
+        line-height: 1.2;
       }
       .title .ar {
-        font-size: 22px;
+        font-size: 32px;
         font-weight: 700;
-        margin: 2px 0 0;
+        margin: 6px 0 0;
         direction: rtl;
+        line-height: 1.2;
       }
 
       .info-box {
@@ -327,12 +348,22 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         border-bottom: 0;
       }
       .totals .label {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
       }
-      .totals .label .ar { direction: rtl; text-align: right; font-weight: 700; }
-      .totals .label .en { direction: ltr; text-align: left; font-weight: 700; }
+      .totals .label .en {
+        direction: ltr;
+        text-align: left;
+        font-weight: 700;
+      }
+      .totals .label .ar {
+        direction: rtl;
+        unicode-bidi: embed;
+        text-align: left;
+        font-weight: 700;
+      }
       .totals .value {
         font-weight: 700;
         text-align: right;
@@ -503,22 +534,22 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         <div class="totals">
           <div class="row">
             <div class="label">
-              <div class="ar" dir="rtl">المجموع الفرعي</div>
               <div class="en">Subtotal</div>
+              <div class="ar">المجموع الفرعي</div>
             </div>
             <div class="value"><span class="currency">${money(input.subtotal)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
           <div class="row">
             <div class="label">
-              <div class="ar" dir="rtl">إجمالي ضريبة القيمة المضافة</div>
               <div class="en">Total VAT</div>
+              <div class="ar">إجمالي ضريبة القيمة المضافة</div>
             </div>
             <div class="value"><span class="currency">${money(input.vatTotal)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
           <div class="row">
             <div class="label">
-              <div class="ar" dir="rtl">المجموع شامل القيمة المضافة</div>
               <div class="en">Total</div>
+              <div class="ar">المجموع شامل القيمة المضافة</div>
             </div>
             <div class="value"><span class="currency">${money(input.total)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
