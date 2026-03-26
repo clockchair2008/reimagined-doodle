@@ -1,10 +1,13 @@
-import { IsString, IsOptional, IsEmail, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsBoolean, Matches } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString()
   name: string;
 
   @IsString()
+  @Matches(/^\d{15}$/, {
+    message: 'vatNumber must be exactly 15 digits (Saudi VAT format)',
+  })
   vatNumber: string;
 
   @IsString()

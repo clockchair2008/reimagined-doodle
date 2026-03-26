@@ -1,6 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { Company } from '../../entities/company.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
@@ -17,7 +17,15 @@ export class CompaniesService {
     // Frontend may still send `logo`, but we don't persist it here.
     const { logo: _logo, ...rest } = createCompanyDto as any;
     const company = this.companyRepository.create(rest as any) as unknown as Company;
-    return await this.companyRepository.save(company);
+    try {
+      return await this.companyRepository.save(company);
+    } catch (error: any) {
+      // Postgres unique_violation
+      if (error instanceof QueryFailedError && error?.driverError?.code === '23505') {
+        throw new ConflictException('A company with this VAT number already exists');
+      }
+      throw error;
+    }
   }
 
   async findAll(): Promise<Company[]> {
