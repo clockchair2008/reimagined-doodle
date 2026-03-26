@@ -353,7 +353,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       .bottom {
         display: grid;
-        grid-template-columns: 1fr 280px;
+        grid-template-columns: 1fr 380px;
         gap: 16px;
         margin-top: 10px;
         align-items: start;
@@ -361,12 +361,12 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       .totals {
         width: 100%;
-        font-size: 13px;
+        font-size: 12px;
       }
       .totals .row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 18px 100px;
-        column-gap: 6px;
+        grid-template-columns: minmax(0, 1fr) 20px 120px;
+        column-gap: 8px;
         padding: 4px 0;
         border-bottom: 0;
         align-items: center;
@@ -375,7 +375,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         display: grid;
         grid-template-columns: auto auto;
         align-items: center;
-        column-gap: 10px;
+        column-gap: 12px;
         white-space: nowrap;
       }
       .totals .label .en {
@@ -393,12 +393,12 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         font-weight: 700;
         text-align: right;
         font-variant-numeric: tabular-nums;
-        min-width: 110px;
+        min-width: 120px;
       }
       .totals .currency-sign {
         font-family: "SaudiRiyal", "Noto Sans Arabic", "Noto Naskh Arabic", "Amiri", Arial, sans-serif;
         text-align: center;
-        width: 22px;
+        width: 20px;
         justify-self: center;
       }
 
