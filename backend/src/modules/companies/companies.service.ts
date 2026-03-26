@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { Company } from '../../entities/company.entity';
+import { Invoice } from '../../entities/invoice.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 
@@ -10,6 +11,8 @@ export class CompaniesService {
   constructor(
     @InjectRepository(Company)
     private companyRepository: Repository<Company>,
+    @InjectRepository(Invoice)
+    private invoiceRepository: Repository<Invoice>,
   ) {}
 
   async create(createCompanyDto: CreateCompanyDto): Promise<Company> {
@@ -51,8 +54,37 @@ export class CompaniesService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.findOne(id);
+    const company = await this.findOne(id);
+    const companySnapshot = {
+      id: company.id,
+      name: company.name,
+      vatNumber: company.vatNumber,
+      commercialRegistration: company.commercialRegistration ?? null,
+      address: company.address ?? null,
+      streetName: company.streetName ?? null,
+      buildingNumber: company.buildingNumber ?? null,
+      plotIdentification: company.plotIdentification ?? null,
+      citySubdivisionName: company.citySubdivisionName ?? null,
+      city: company.city ?? null,
+      postalCode: company.postalCode ?? null,
+      country: company.country ?? null,
+      phone: company.phone ?? null,
+      email: company.email ?? null,
+      website: company.website ?? null,
+      logo: company.logo ?? null,
+      isActive: company.isActive,
+    };
+
     try {
+      // Preserve historical invoice company data before company deletion.
+      await this.invoiceRepository
+        .createQueryBuilder()
+        .update(Invoice)
+        .set({ companySnapshot: companySnapshot as any })
+        .where('"companyId" = :companyId', { companyId: id })
+        .andWhere('"companySnapshot" IS NULL')
+        .execute();
+
       await this.companyRepository.delete(id);
     } catch (error: any) {
       // Postgres foreign_key_violation: company is referenced by invoices/notes/etc.
