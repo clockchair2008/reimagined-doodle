@@ -133,7 +133,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       @page {
         size: A4;
-        margin: 20mm 18mm 20mm 18mm;
+        margin: 20mm 15mm 20mm 15mm;
       }
 
       html, body {
@@ -214,7 +214,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
 
       .divider {
-        margin: 10px 0 14px;
+        margin: 4px 0 14px;
         border-top: 2px solid var(--grid);
       }
 
