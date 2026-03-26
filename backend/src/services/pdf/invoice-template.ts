@@ -173,10 +173,10 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         font-weight: 700;
         line-height: 1.2;
       }
-      /* Country, VAT, CR — larger as requested */
+      /* Country, VAT, CR */
       .header .block .line {
         margin: 2px 0;
-        font-size: 18px;
+        font-size: 16px;
         line-height: 1.35;
       }
       .header .block.right { text-align: right; direction: rtl; }
@@ -186,20 +186,20 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         justify-content: center;
         align-items: flex-start;
         align-self: start;
-        margin: 0;
+        margin: -10px 0 0;
         padding: 0;
       }
       .logo {
-        width: 99px;
-        height: 99px;
+        width: 130px;
+        height: 130px;
         object-fit: contain;
         display: block;
         margin: 0;
         padding: 0;
       }
       .logo-placeholder {
-        width: 99px;
-        height: 99px;
+        width: 130px;
+        height: 130px;
         flex-shrink: 0;
       }
 
@@ -360,9 +360,10 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
       .totals .label {
         display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0 12px;
       }
       .totals .label .en {
         direction: ltr;
@@ -372,7 +373,6 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .totals .label .ar {
         direction: rtl;
         unicode-bidi: embed;
-        text-align: left;
         font-weight: 700;
       }
       .totals .value {
