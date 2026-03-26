@@ -62,7 +62,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         <img src="${escapeHtml(input.qrDataUrl)}" alt="qr" />
         <div class="qr-note">
           <div class="qr-note-en">This QR code is encoded as per ZATCA e-invoicing requirements</div>
-          <div class="qr-note-ar" dir="rtl">تم ترميز هذا الرمز وفقاً لمتطلبات هيئة الزكاة والضريبة والجمارك للفواتير الإلكترونية</div>
+          <div class="qr-note-ar">تم ترميز هذا الرمز وفقاً لمتطلبات هيئة الزكاة والضريبة والجمارك للفواتير الإلكترونية</div>
         </div>
       </div>
     `
@@ -169,14 +169,14 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .header .block .line { margin: 2px 0; }
       .header .block.right { text-align: right; direction: rtl; }
       .logo {
-        width: 76px;
-        height: 76px;
+        width: 99px;
+        height: 99px;
         object-fit: contain;
         display: block;
       }
       .logo-placeholder {
-        width: 76px;
-        height: 76px;
+        width: 99px;
+        height: 99px;
       }
 
       .divider {
@@ -358,9 +358,29 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         object-fit: contain;
         border: 0;
       }
-      .qr-note { margin-top: 6px; max-width: 260px; }
-      .qr-note-en { color: var(--muted); font-size: 9px; }
-      .qr-note-ar { color: var(--muted); font-size: 9px; margin-top: 2px; }
+      /* 1.3× prior caption size (9px); keep shared block width so AR sits under EN */
+      .qr-note {
+        margin-top: 6px;
+        max-width: 338px;
+        direction: ltr;
+        text-align: left;
+      }
+      .qr-note-en,
+      .qr-note-ar {
+        color: var(--muted);
+        font-size: 11.7px;
+        line-height: 1.35;
+        margin: 0;
+        text-align: left;
+      }
+      .qr-note-en {
+        direction: ltr;
+      }
+      .qr-note-ar {
+        direction: rtl;
+        unicode-bidi: embed;
+        margin-top: 4px;
+      }
 
       .footer {
         position: fixed;
