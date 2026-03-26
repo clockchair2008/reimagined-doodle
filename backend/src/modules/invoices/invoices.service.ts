@@ -49,6 +49,35 @@ export class InvoicesService {
     private configService: ConfigService,
   ) {}
 
+  private buildCompanySnapshot(company: Company): Record<string, any> {
+    return {
+      id: company.id,
+      name: company.name,
+      vatNumber: company.vatNumber,
+      commercialRegistration: company.commercialRegistration ?? null,
+      address: company.address ?? null,
+      streetName: company.streetName ?? null,
+      buildingNumber: company.buildingNumber ?? null,
+      plotIdentification: company.plotIdentification ?? null,
+      citySubdivisionName: company.citySubdivisionName ?? null,
+      city: company.city ?? null,
+      postalCode: company.postalCode ?? null,
+      country: company.country ?? null,
+      phone: company.phone ?? null,
+      email: company.email ?? null,
+      website: company.website ?? null,
+      logo: company.logo ?? null,
+      isActive: company.isActive,
+    };
+  }
+
+  private hydrateCompanyFromSnapshot(invoice: Invoice): Invoice {
+    if (!invoice.company && invoice.companySnapshot) {
+      (invoice as any).company = invoice.companySnapshot as any;
+    }
+    return invoice;
+  }
+
   async create(createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
     // Validate company and customer exist
     const company = await this.companyRepository.findOne({
@@ -107,6 +136,7 @@ export class InvoicesService {
       customerId: createInvoiceDto.customerId,
       // Always generate unique order number on backend (frontend should not control this).
       orderNumber: generatedOrderNumber,
+      companySnapshot: this.buildCompanySnapshot(company),
       subtotal,
       vatAmount,
       totalAmount,
@@ -128,10 +158,11 @@ export class InvoicesService {
   }
 
   async findAll(): Promise<Invoice[]> {
-    return await this.invoiceRepository.find({
+    const invoices = await this.invoiceRepository.find({
       relations: ['company', 'customer', 'items'],
       order: { createdAt: 'DESC' },
     });
+    return invoices.map((invoice) => this.hydrateCompanyFromSnapshot(invoice));
   }
 
   async findOne(id: string): Promise<Invoice> {
@@ -142,7 +173,7 @@ export class InvoicesService {
     if (!invoice) {
       throw new NotFoundException(`Invoice with ID ${id} not found`);
     }
-    return invoice;
+    return this.hydrateCompanyFromSnapshot(invoice);
   }
 
   async update(id: string, updateInvoiceDto: UpdateInvoiceDto): Promise<Invoice> {
@@ -243,7 +274,7 @@ export class InvoicesService {
         throw new BadRequestException('Invoice is immutable');
       }
 
-      if (!invoice.company) {
+      if (!invoice.company && !invoice.companySnapshot) {
         throw new BadRequestException('Company information is missing');
       }
 
@@ -251,7 +282,7 @@ export class InvoicesService {
         throw new BadRequestException('Customer information is missing');
       }
 
-      const company = invoice.company;
+      const company = (invoice.company ?? (invoice.companySnapshot as any)) as Company;
       const customer = invoice.customer;
 
       // Get previous hash for chaining (includes invoices and notes)
@@ -496,9 +527,13 @@ export class InvoicesService {
         const isSimplified = invoice.customer?.type === 'B2C';
         const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
         const titleAr = isSimplified ? 'فاتورة ضريبية مبسطة' : 'فاتورة ضريبية';
+        const companyForPdf = (invoice.company ?? (invoice.companySnapshot as any)) as Company;
+        if (!companyForPdf) {
+          throw new BadRequestException('Company information is missing for PDF generation');
+        }
         const { buffer } = await this.pdfService.generateInvoicePdf({
           invoice,
-          company: invoice.company,
+          company: companyForPdf,
           customer: invoice.customer,
           titleEn,
           titleAr,

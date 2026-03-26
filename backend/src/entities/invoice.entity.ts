@@ -49,6 +49,10 @@ export class Invoice {
   @Column({ type: 'varchar', length: 100, nullable: true })
   orderNumber: string;
 
+  // Immutable company snapshot kept for historical invoice integrity.
+  @Column({ type: 'jsonb', nullable: true })
+  companySnapshot: Record<string, any> | null;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   subtotal: number;
 
