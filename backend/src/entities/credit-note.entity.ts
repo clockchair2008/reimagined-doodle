@@ -40,12 +40,12 @@ export class CreditNote {
   @JoinColumn({ name: 'companyId' })
   company: Company | null;
 
-  @Column({ type: 'uuid' })
-  customerId: string;
+  @Column({ type: 'uuid', nullable: true })
+  customerId: string | null;
 
-  @ManyToOne(() => Customer)
+  @ManyToOne(() => Customer, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'customerId' })
-  customer: Customer;
+  customer: Customer | null;
 
   @Column({ type: 'uuid' })
   originalInvoiceId: string;

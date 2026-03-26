@@ -39,12 +39,12 @@ export class Invoice {
   @JoinColumn({ name: 'companyId' })
   company: Company | null;
 
-  @Column({ type: 'uuid' })
-  customerId: string;
+  @Column({ type: 'uuid', nullable: true })
+  customerId: string | null;
 
-  @ManyToOne(() => Customer)
+  @ManyToOne(() => Customer, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'customerId' })
-  customer: Customer;
+  customer: Customer | null;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   orderNumber: string;
@@ -52,6 +52,10 @@ export class Invoice {
   // Immutable company snapshot kept for historical invoice integrity.
   @Column({ type: 'jsonb', nullable: true })
   companySnapshot: Record<string, any> | null;
+
+  // Immutable customer snapshot kept for historical invoice integrity.
+  @Column({ type: 'jsonb', nullable: true })
+  customerSnapshot: Record<string, any> | null;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   subtotal: number;

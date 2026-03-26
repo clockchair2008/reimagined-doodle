@@ -71,9 +71,36 @@ export class InvoicesService {
     };
   }
 
+  private buildCustomerSnapshot(customer: Customer): Record<string, any> {
+    return {
+      id: customer.id,
+      name: customer.name,
+      vatNumber: customer.vatNumber ?? null,
+      address: customer.address ?? null,
+      streetName: customer.streetName ?? null,
+      buildingNumber: customer.buildingNumber ?? null,
+      plotIdentification: customer.plotIdentification ?? null,
+      citySubdivisionName: customer.citySubdivisionName ?? null,
+      city: customer.city ?? null,
+      postalCode: customer.postalCode ?? null,
+      country: customer.country ?? null,
+      phone: customer.phone ?? null,
+      email: customer.email ?? null,
+      type: (customer as any).type ?? null,
+      isActive: customer.isActive,
+    };
+  }
+
   private hydrateCompanyFromSnapshot(invoice: Invoice): Invoice {
     if (!invoice.company && invoice.companySnapshot) {
       (invoice as any).company = invoice.companySnapshot as any;
+    }
+    return invoice;
+  }
+
+  private hydrateCustomerFromSnapshot(invoice: Invoice): Invoice {
+    if (!invoice.customer && invoice.customerSnapshot) {
+      (invoice as any).customer = invoice.customerSnapshot as any;
     }
     return invoice;
   }
@@ -137,6 +164,7 @@ export class InvoicesService {
       // Always generate unique order number on backend (frontend should not control this).
       orderNumber: generatedOrderNumber,
       companySnapshot: this.buildCompanySnapshot(company),
+      customerSnapshot: this.buildCustomerSnapshot(customer),
       subtotal,
       vatAmount,
       totalAmount,
@@ -162,7 +190,9 @@ export class InvoicesService {
       relations: ['company', 'customer', 'items'],
       order: { createdAt: 'DESC' },
     });
-    return invoices.map((invoice) => this.hydrateCompanyFromSnapshot(invoice));
+    return invoices
+      .map((invoice) => this.hydrateCompanyFromSnapshot(invoice))
+      .map((invoice) => this.hydrateCustomerFromSnapshot(invoice));
   }
 
   async findOne(id: string): Promise<Invoice> {
@@ -173,7 +203,7 @@ export class InvoicesService {
     if (!invoice) {
       throw new NotFoundException(`Invoice with ID ${id} not found`);
     }
-    return this.hydrateCompanyFromSnapshot(invoice);
+    return this.hydrateCustomerFromSnapshot(this.hydrateCompanyFromSnapshot(invoice));
   }
 
   async update(id: string, updateInvoiceDto: UpdateInvoiceDto): Promise<Invoice> {
@@ -278,12 +308,12 @@ export class InvoicesService {
         throw new BadRequestException('Company information is missing');
       }
 
-      if (!invoice.customer) {
+      if (!invoice.customer && !invoice.customerSnapshot) {
         throw new BadRequestException('Customer information is missing');
       }
 
       const company = (invoice.company ?? (invoice.companySnapshot as any)) as Company;
-      const customer = invoice.customer;
+      const customer = (invoice.customer ?? (invoice.customerSnapshot as any)) as Customer;
 
       // Get previous hash for chaining (includes invoices and notes)
       const previousHash = await this.hashChainService.getPreviousDocumentHash(
@@ -524,7 +554,11 @@ export class InvoicesService {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
       }
-        const isSimplified = invoice.customer?.type === 'B2C';
+        const customerForPdf = (invoice.customer ?? (invoice.customerSnapshot as any)) as Customer;
+        if (!customerForPdf) {
+          throw new BadRequestException('Customer information is missing for PDF generation');
+        }
+        const isSimplified = customerForPdf?.type === 'B2C';
         const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
         const titleAr = isSimplified ? 'فاتورة ضريبية مبسطة' : 'فاتورة ضريبية';
         const companyForPdf = (invoice.company ?? (invoice.companySnapshot as any)) as Company;
@@ -534,7 +568,7 @@ export class InvoicesService {
         const { buffer } = await this.pdfService.generateInvoicePdf({
           invoice,
           company: companyForPdf,
-          customer: invoice.customer,
+          customer: customerForPdf,
           titleEn,
           titleAr,
         });
