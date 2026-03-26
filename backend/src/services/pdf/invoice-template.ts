@@ -12,7 +12,6 @@ export type InvoicePdfTemplateInput = {
   customer: Customer;
   documentNumber: string;
   issueDate: string; // YYYY-MM-DD
-  dueDate?: string; // YYYY-MM-DD
   orderNumber?: string;
   items: Array<{
     description: string;
@@ -70,7 +69,6 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
     : '';
 
   const issueDate = escapeHtml(input.issueDate);
-  const dueDate = escapeHtml(input.dueDate ?? input.issueDate);
   const orderNumber = escapeHtml(input.orderNumber ?? '—');
 
   const customerVat = escapeHtml((input.customer as any)?.vatNumber ?? '—');
@@ -211,6 +209,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .info-grid {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
       }
       .info-grid td {
         border-bottom: 1px solid var(--border);
@@ -218,20 +217,67 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         vertical-align: middle;
       }
       .info-grid tr:last-child td { border-bottom: none; }
-      .info-grid td.label {
-        width: 40%;
+
+      /* Full-width rows: English | value (center) | Arabic */
+      .meta-full .meta-en {
+        width: 26%;
         font-weight: 600;
+        text-align: left;
         background: #f9fafb;
       }
-      .bilingual-label {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 1px;
+      .meta-full .meta-val {
+        width: 48%;
+        text-align: center;
       }
-      .bilingual-label .ar { direction: rtl; text-align: right; font-weight: 600; }
-      .bilingual-label .en { direction: ltr; text-align: left; font-weight: 600; }
-      .info-grid td.value {
-        width: 60%;
+      .meta-full .meta-ar {
+        width: 26%;
+        font-weight: 600;
+        text-align: right;
+        direction: rtl;
+        background: #f9fafb;
+      }
+
+      /* Split row: two halves, each EN | value | AR */
+      .meta-split-wrap {
+        padding: 0 !important;
+        vertical-align: middle;
+      }
+      .meta-split-inner {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+      .meta-split-inner td.meta-split-half {
+        width: 50%;
+        border-right: 1px solid var(--border);
+        padding: 6px 8px;
+        vertical-align: middle;
+      }
+      .meta-split-inner td.meta-split-half:last-child {
+        border-right: none;
+      }
+      .triplet {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        gap: 8px;
+      }
+      .triplet .meta-en {
+        font-weight: 600;
+        text-align: left;
+        background: #f9fafb;
+        padding: 4px 6px;
+      }
+      .triplet .meta-val {
+        text-align: center;
+        padding: 4px 4px;
+      }
+      .triplet .meta-ar {
+        font-weight: 600;
+        text-align: right;
+        direction: rtl;
+        background: #f9fafb;
+        padding: 4px 6px;
       }
 
       .items {
@@ -367,68 +413,47 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       <div class="info-box">
         <table class="info-grid">
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">Customer</div>
-                <div class="ar" dir="rtl">العميل</div>
-              </div>
-            </td>
-            <td class="value">${escapeHtml(input.customer.name)}</td>
+          <tr class="meta-full">
+            <td class="meta-en">Customer</td>
+            <td class="meta-val">${escapeHtml(input.customer.name)}</td>
+            <td class="meta-ar">العميل</td>
           </tr>
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">Address</div>
-                <div class="ar" dir="rtl">العنوان</div>
-              </div>
-            </td>
-            <td class="value">${customerAddr}</td>
+          <tr class="meta-full">
+            <td class="meta-en">Address</td>
+            <td class="meta-val">${customerAddr}</td>
+            <td class="meta-ar">العنوان</td>
           </tr>
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">VAT number</div>
-                <div class="ar" dir="rtl">رقم التسجيل الضريبي</div>
-              </div>
-            </td>
-            <td class="value">${customerVat}</td>
+          <tr class="meta-full">
+            <td class="meta-en">VAT number</td>
+            <td class="meta-val">${customerVat}</td>
+            <td class="meta-ar">رقم التسجيل الضريبي</td>
           </tr>
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">Invoice number</div>
-                <div class="ar" dir="rtl">رقم الفاتورة</div>
-              </div>
+          <tr class="meta-split">
+            <td colspan="3" class="meta-split-wrap">
+              <table class="meta-split-inner">
+                <tr>
+                  <td class="meta-split-half">
+                    <div class="triplet">
+                      <span class="meta-en">Invoice number</span>
+                      <span class="meta-val">${escapeHtml(input.documentNumber)}</span>
+                      <span class="meta-ar">رقم الفاتورة</span>
+                    </div>
+                  </td>
+                  <td class="meta-split-half">
+                    <div class="triplet">
+                      <span class="meta-en">Date</span>
+                      <span class="meta-val">${issueDate}</span>
+                      <span class="meta-ar">التاريخ</span>
+                    </div>
+                  </td>
+                </tr>
+              </table>
             </td>
-            <td class="value">${escapeHtml(input.documentNumber)}</td>
           </tr>
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">Date</div>
-                <div class="ar" dir="rtl">التاريخ</div>
-              </div>
-            </td>
-            <td class="value">${issueDate}</td>
-          </tr>
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">Due date</div>
-                <div class="ar" dir="rtl">تاريخ الاستحقاق</div>
-              </div>
-            </td>
-            <td class="value">${dueDate}</td>
-          </tr>
-          <tr>
-            <td class="label">
-              <div class="bilingual-label">
-                <div class="en">Order number</div>
-                <div class="ar" dir="rtl">رقم أمر الشراء</div>
-              </div>
-            </td>
-            <td class="value">${orderNumber}</td>
+          <tr class="meta-full">
+            <td class="meta-en">Order number</td>
+            <td class="meta-val">${orderNumber}</td>
+            <td class="meta-ar">رقم أمر الشراء</td>
           </tr>
         </table>
       </div>
@@ -536,7 +561,6 @@ export function mapInvoiceToTemplateInput(params: {
     customer,
     documentNumber: invoice.invoiceNumber,
     issueDate,
-    dueDate: issueDate,
     orderNumber: invoice.orderNumber ?? '—',
     items,
     subtotal: Number(invoice.subtotal ?? 0),
