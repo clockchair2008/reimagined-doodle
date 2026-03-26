@@ -176,6 +176,8 @@ export class PuppeteerPdfService implements OnModuleInit, OnModuleDestroy {
 
     const page = await browser.newPage();
     try {
+      // Match A4 @ 96dpi so CSS 100vh / layout fills one printed page (footer at bottom).
+      await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 });
       await page.setContent(html, { waitUntil: ['load', 'domcontentloaded', 'networkidle0'] });
       await page.emulateMediaType('screen');
 

@@ -137,17 +137,27 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
 
       html, body {
+        height: 100%;
+        margin: 0;
         background: var(--bg);
         color: var(--text);
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         font-family: "Noto Sans Arabic", "Noto Naskh Arabic", "Amiri", Arial, sans-serif;
         font-size: 11px;
+        box-sizing: border-box;
       }
+      *, *::before, *::after { box-sizing: inherit; }
 
+      /* One full page height: push footer to physical bottom */
       .page {
         position: relative;
-        min-height: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .page-body {
+        flex: 1 1 auto;
       }
 
       .header {
@@ -424,10 +434,11 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
 
       .footer {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 8mm;
+        flex-shrink: 0;
+        margin-top: auto;
+        width: 100%;
+        padding-top: 14px;
+        padding-bottom: 0;
         font-size: 9px;
         color: var(--muted);
       }
@@ -447,6 +458,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
   </head>
   <body>
     <div class="page">
+      <div class="page-body">
       <div class="header">
         <div class="block left">
           <h1>${escapeHtml(input.company.name)}</h1>
@@ -564,6 +576,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
             <div class="value"><span class="currency">${money(input.total)}<span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></span></div>
           </div>
         </div>
+      </div>
       </div>
 
       <div class="footer">
