@@ -361,11 +361,12 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       .totals {
         width: 100%;
+        font-size: 13px;
       }
       .totals .row {
         display: grid;
-        grid-template-columns: 1fr auto auto;
-        column-gap: 10px;
+        grid-template-columns: 1fr 22px 110px;
+        column-gap: 8px;
         padding: 4px 0;
         border-bottom: 0;
         align-items: center;
@@ -391,18 +392,20 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         font-weight: 700;
         text-align: right;
         font-variant-numeric: tabular-nums;
+        min-width: 110px;
       }
       .totals .currency-sign {
         font-family: "SaudiRiyal", "Noto Sans Arabic", "Noto Naskh Arabic", "Amiri", Arial, sans-serif;
         text-align: center;
-        min-width: 18px;
+        width: 22px;
+        justify-self: center;
       }
 
       /* U+20C1 is a combining-mark type symbol in many fonts.
          Render it after a base character (dotted circle) to ensure it appears. */
       .riyal-symbol {
         font-family: "SaudiRiyal", "Symbola", "Noto Sans Symbols2", "Noto Sans Arabic", "Amiri", Arial, sans-serif;
-        font-size: 1.2em;
+        font-size: 1.3em;
         line-height: 1;
         white-space: nowrap;
       }
