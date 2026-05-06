@@ -101,6 +101,33 @@ export class Invoice {
   xmlContent: string; // UBL 2.1 XML content
 
   @Column({ type: 'text', nullable: true })
+  signedXmlContent: string;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  invoiceHash: string | null;
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  pih: string | null;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  zatcaUuid: string | null;
+
+  @Column({ type: 'varchar', length: 10, nullable: true })
+  invoiceTypeCode: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  zatcaStatus: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  zatcaResponse: Record<string, any> | null;
+
+  @Column({ type: 'text', nullable: true })
+  signedXmlPath: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  jsonPath: string | null;
+
+  @Column({ type: 'text', nullable: true })
   pdfPath: string; // Path to stored PDF
 
   @Column({ type: 'text', nullable: true })

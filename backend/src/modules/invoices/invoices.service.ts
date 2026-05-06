@@ -403,9 +403,14 @@ export class InvoicesService {
         const isSimplified = customer.type === 'B2C';
         const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
         const titleAr = isSimplified ? 'فاتورة ضريبية مبسطة' : 'فاتورة ضريبية';
+        // Fetch fresh company data to ensure latest logo is used
+        const freshCompany = await this.companyRepository.findOne({
+          where: { id: invoice.companyId },
+        });
+        const companyForPdf = freshCompany || company;
         const { buffer } = await this.pdfService.generateInvoicePdf({
           invoice,
-          company,
+          company: companyForPdf,
           customer,
           titleEn,
           titleAr,
@@ -548,41 +553,42 @@ export class InvoicesService {
       throw new BadRequestException('Invalid PDF path');
     }
 
-    // If missing, regenerate PDF for issued invoices (supports older records)
-    if (!invoice.pdfPath || !fs.existsSync(resolvedPath)) {
-      const dir = path.dirname(expectedPath);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
-      }
-        const customerForPdf = (invoice.customer ?? (invoice.customerSnapshot as any)) as Customer;
-        if (!customerForPdf) {
-          throw new BadRequestException('Customer information is missing for PDF generation');
-        }
-        const isSimplified = customerForPdf?.type === 'B2C';
-        const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
-        const titleAr = isSimplified ? 'فاتورة ضريبية مبسطة' : 'فاتورة ضريبية';
-        const companyForPdf = (invoice.company ?? (invoice.companySnapshot as any)) as Company;
-        if (!companyForPdf) {
-          throw new BadRequestException('Company information is missing for PDF generation');
-        }
-        const { buffer } = await this.pdfService.generateInvoicePdf({
-          invoice,
-          company: companyForPdf,
-          customer: customerForPdf,
-          titleEn,
-          titleAr,
-        });
-        await this.pdfService.writePdfToPath(buffer, expectedPath);
-      await this.invoiceRepository.update(id, { pdfPath: expectedPath });
-      if (!fs.existsSync(expectedPath)) {
-        throw new NotFoundException('PDF file not found on disk');
-      }
-      return { absolutePath: expectedPath, filename: `${invoice.invoiceNumber}.pdf` };
+    // Always regenerate the downloadable PDF so the current selected company logo is used.
+    const dir = path.dirname(expectedPath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
     }
-    return {
-      absolutePath: resolvedPath,
-      filename: `${invoice.invoiceNumber}.pdf`,
-    };
+
+    const customerForPdf = (invoice.customer ?? (invoice.customerSnapshot as any)) as Customer;
+    if (!customerForPdf) {
+      throw new BadRequestException('Customer information is missing for PDF generation');
+    }
+
+    const isSimplified = customerForPdf?.type === 'B2C';
+    const titleEn = isSimplified ? 'Simplified Tax Invoice' : 'Tax Invoice';
+    const titleAr = isSimplified ? '\u0641\u0627\u062A\u0648\u0631\u0629 \u0636\u0631\u064A\u0628\u064A\u0629 \u0645\u0628\u0633\u0637\u0629' : '\u0641\u0627\u062A\u0648\u0631\u0629 \u0636\u0631\u064A\u0628\u064A\u0629';
+    const freshCompany = await this.companyRepository.findOne({
+      where: { id: invoice.companyId },
+    });
+    const companyForPdf = freshCompany || ((invoice.company ?? (invoice.companySnapshot as any)) as Company);
+    if (!companyForPdf) {
+      throw new BadRequestException('Company information is missing for PDF generation');
+    }
+
+    const { buffer } = await this.pdfService.generateInvoicePdf({
+      invoice,
+      company: companyForPdf,
+      customer: customerForPdf,
+      titleEn,
+      titleAr,
+    });
+    await this.pdfService.writePdfToPath(buffer, expectedPath);
+    await this.invoiceRepository.update(id, { pdfPath: expectedPath });
+    if (!fs.existsSync(expectedPath)) {
+      throw new NotFoundException('PDF file not found on disk');
+    }
+
+    return { absolutePath: expectedPath, filename: `${invoice.invoiceNumber}.pdf` };
   }
 
   /** Check if ZATCA SDK CLI is available for local validation. */

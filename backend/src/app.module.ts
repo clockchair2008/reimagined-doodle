@@ -12,6 +12,8 @@ import { DebitNotesModule } from './modules/debit-notes/debit-notes.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { InvoiceComplianceModule } from './modules/invoice-compliance/invoice-compliance.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { StatsModule } from './modules/stats/stats.module';
     AuditLogsModule,
     AuthModule,
     StatsModule,
+    InvoiceComplianceModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

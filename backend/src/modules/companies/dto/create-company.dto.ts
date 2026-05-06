@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEmail, IsBoolean, Matches } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsBoolean, Matches, IsNotEmpty } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString()
@@ -59,8 +59,8 @@ export class CreateCompanyDto {
   website?: string;
 
   @IsString()
-  @IsOptional()
-  logo?: string;
+  @IsNotEmpty()
+  logo: string; // Base64 encoded logo - required
 
   @IsBoolean()
   @IsOptional()

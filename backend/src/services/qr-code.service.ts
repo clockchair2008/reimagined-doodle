@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import * as QRCode from 'qrcode';
-import * as crypto from 'crypto';
 
 export interface QRCodeData {
   sellerName: string;
@@ -25,19 +24,19 @@ export class QrCodeService {
       { tag: 5, value: data.vatTotal.toString() },
     ];
 
-    let tlvData = '';
+    const bytes: Buffer[] = [];
     for (const field of fields) {
       const value = field.value.toString();
-      const length = value.length;
-      
-      // Tag (1 byte) + Length (1 byte) + Value
-      const tag = String.fromCharCode(field.tag);
-      const len = String.fromCharCode(length);
-      tlvData += tag + len + value;
+      const valueBuffer = Buffer.from(value, 'utf8');
+      const length = valueBuffer.length;
+
+      // Tag (1 byte) + Length (1 byte) + Value bytes (UTF-8)
+      bytes.push(Buffer.from([field.tag]));
+      bytes.push(Buffer.from([length]));
+      bytes.push(valueBuffer);
     }
 
-    // Base64 encode the TLV data
-    return Buffer.from(tlvData, 'binary').toString('base64');
+    return Buffer.concat(bytes).toString('base64');
   }
 
   /**
