@@ -583,7 +583,7 @@ export class InvoicesService {
       titleAr,
     });
     await this.pdfService.writePdfToPath(buffer, expectedPath);
-    await this.invoiceRepository.update(id, { pdfPath: expectedPath });
+    // await this.invoiceRepository.update(id, { pdfPath: expectedPath });
     if (!fs.existsSync(expectedPath)) {
       throw new NotFoundException('PDF file not found on disk');
     }
