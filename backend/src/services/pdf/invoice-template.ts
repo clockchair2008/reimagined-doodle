@@ -86,6 +86,26 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .join(', ') || '—',
   );
 
+  // Full company address for footer
+  const addressParts = [
+    (input.company as any)?.address,
+    (input.company as any)?.streetName,
+    (input.company as any)?.buildingNumber,
+    (input.company as any)?.citySubdivisionName,
+    (input.company as any)?.city,
+    (input.company as any)?.postalCode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const contactParts = [
+    (input.company as any)?.phone ? `Phone: ${(input.company as any).phone}` : '',
+    (input.company as any)?.email ? `Email: ${(input.company as any).email}` : '',
+  ].filter(Boolean);
+
+  const companyAddrLine1 = escapeHtml(addressParts || '');
+  const companyAddrLine2 = escapeHtml(contactParts.join(' | '));
+
   const companyCountryEn = escapeHtml((input.company as any)?.country || 'Kingdom of Saudi Arabia');
   const companyCountryAr = 'المملكة العربية السعودية';
 
@@ -459,6 +479,14 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       }
       .footer .center { text-align: center; }
       .footer .right { text-align: right; }
+      .footer .address-block {
+        font-size: 7.5px;
+        line-height: 1.4;
+        color: var(--muted);
+        white-space: normal;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
       .footer .small {
         margin-top: 4px;
         text-align: center;
@@ -597,6 +625,14 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
           <div></div>
           <div class="center">${escapeHtml(input.company.name)}</div>
           <div class="right">${escapeHtml(rightFooter)}</div>
+        </div>
+        <div class="row">
+          <div></div>
+          <div class="center address-block">
+            ${companyAddrLine1 ? `<div>${companyAddrLine1}</div>` : ''}
+            ${companyAddrLine2 ? `<div>${companyAddrLine2}</div>` : ''}
+          </div>
+          <div></div>
         </div>
         <div class="small">
           Electronically generated invoice (ZATCA Phase 1). No signature required for print.
