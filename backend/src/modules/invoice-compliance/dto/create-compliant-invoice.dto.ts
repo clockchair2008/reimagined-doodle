@@ -9,8 +9,8 @@ export class CompliantInvoiceItemDto {
   @IsString()
   description?: string;
 
-  @IsNumber()
-  @Min(1)
+  @IsNumber({ maxDecimalPlaces: 3 })
+  @Min(0.001)
   quantity: number;
 
   @IsNumber()

@@ -26,6 +26,7 @@ import { AuditAction } from '../../entities/audit-log.entity';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import { round2 } from '../../utils/money';
 
 @Injectable()
 export class InvoicesService {
@@ -125,9 +126,9 @@ export class InvoicesService {
     let subtotal = 0;
     const items = createInvoiceDto.items.map((itemDto) => {
       const vatRate = itemDto.vatRate || 15; // Default 15% VAT for Saudi Arabia
-      const lineTotal = itemDto.quantity * itemDto.unitPrice;
-      const vatAmount = (lineTotal * vatRate) / 100;
-      subtotal += lineTotal;
+      const lineTotal = round2(itemDto.quantity * itemDto.unitPrice);
+      const vatAmount = round2((lineTotal * vatRate) / 100);
+      subtotal = round2(subtotal + lineTotal);
 
       return this.invoiceItemRepository.create({
         name: itemDto.name,
@@ -136,12 +137,12 @@ export class InvoicesService {
         unitPrice: itemDto.unitPrice,
         vatRate,
         vatAmount,
-        lineTotal: lineTotal + vatAmount,
+        lineTotal: round2(lineTotal + vatAmount),
       });
     });
 
-    const vatAmount = items.reduce((sum, item) => sum + item.vatAmount, 0);
-    const totalAmount = subtotal + vatAmount;
+    const vatAmount = round2(items.reduce((sum, item) => sum + item.vatAmount, 0));
+    const totalAmount = round2(subtotal + vatAmount);
 
     const issueDate = createInvoiceDto.issueDateTime
       ? new Date(createInvoiceDto.issueDateTime)
@@ -249,9 +250,9 @@ export class InvoicesService {
       let subtotal = 0;
       const items = updateInvoiceDto.items.map((itemDto) => {
         const vatRate = itemDto.vatRate || 15;
-        const lineTotal = itemDto.quantity * itemDto.unitPrice;
-        const vatAmount = (lineTotal * vatRate) / 100;
-        subtotal += lineTotal;
+        const lineTotal = round2(itemDto.quantity * itemDto.unitPrice);
+        const vatAmount = round2((lineTotal * vatRate) / 100);
+        subtotal = round2(subtotal + lineTotal);
 
         return this.invoiceItemRepository.create({
           invoiceId: id,
@@ -261,12 +262,12 @@ export class InvoicesService {
           unitPrice: itemDto.unitPrice,
           vatRate,
           vatAmount,
-          lineTotal: lineTotal + vatAmount,
+          lineTotal: round2(lineTotal + vatAmount),
         });
       });
 
-      const vatAmount = items.reduce((sum, item) => sum + item.vatAmount, 0);
-      const totalAmount = subtotal + vatAmount;
+      const vatAmount = round2(items.reduce((sum, item) => sum + item.vatAmount, 0));
+      const totalAmount = round2(subtotal + vatAmount);
 
       invoice.subtotal = subtotal;
       invoice.vatAmount = vatAmount;

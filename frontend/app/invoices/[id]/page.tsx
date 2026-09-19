@@ -292,7 +292,7 @@ export default function InvoiceDetailPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right text-gray-900">{item.quantity}</td>
+                    <td className="px-6 py-4 text-right text-gray-900">{Number(item.quantity)}</td>
                     <td className="px-6 py-4 text-right text-gray-900">{formatCurrency(item.unitPrice)}</td>
                     <td className="px-6 py-4 text-right text-gray-900">{item.vatRate}%</td>
                     <td className="px-6 py-4 text-right text-gray-900">{formatCurrency(item.vatAmount)}</td>

@@ -29,7 +29,7 @@ export class InvoiceItem {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'decimal', precision: 10, scale: 3 })
   quantity: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })

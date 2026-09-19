@@ -19,6 +19,7 @@ import { AuditAction } from '../../entities/audit-log.entity';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigService } from '@nestjs/config';
+import { round2 } from '../../utils/money';
 
 @Injectable()
 export class DebitNotesService {
@@ -56,9 +57,9 @@ export class DebitNotesService {
     let subtotal = 0;
     const items = dto.items.map((itemDto) => {
       const vatRate = itemDto.vatRate ?? 15;
-      const lineTotal = itemDto.quantity * itemDto.unitPrice;
-      const vatAmount = (lineTotal * vatRate) / 100;
-      subtotal += lineTotal;
+      const lineTotal = round2(itemDto.quantity * itemDto.unitPrice);
+      const vatAmount = round2((lineTotal * vatRate) / 100);
+      subtotal = round2(subtotal + lineTotal);
       return this.debitNoteItemRepository.create({
         name: itemDto.name,
         description: itemDto.description,
@@ -66,11 +67,11 @@ export class DebitNotesService {
         unitPrice: itemDto.unitPrice,
         vatRate,
         vatAmount,
-        lineTotal: lineTotal + vatAmount,
+        lineTotal: round2(lineTotal + vatAmount),
       });
     });
-    const vatAmount = items.reduce((sum, item) => sum + item.vatAmount, 0);
-    const totalAmount = subtotal + vatAmount;
+    const vatAmount = round2(items.reduce((sum, item) => sum + item.vatAmount, 0));
+    const totalAmount = round2(subtotal + vatAmount);
 
     const noteNumber = await this.invoiceSequenceService.getNextDebitNoteNumber(company.id);
 

@@ -85,7 +85,7 @@ export default function DebitNoteDetailPage() {
             <ul className="mt-2 space-y-1">
               {note.items?.map((item: any) => (
                 <li key={item.id} className="text-gray-700">
-                  {item.name} — Qty {item.quantity} × {Number(item.unitPrice).toFixed(2)} SAR = {Number(item.lineTotal).toFixed(2)} SAR
+                  {item.name} — Qty {Number(item.quantity)} × {Number(item.unitPrice).toFixed(2)} SAR = {Number(item.lineTotal).toFixed(2)} SAR
                 </li>
               ))}
             </ul>

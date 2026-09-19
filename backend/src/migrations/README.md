@@ -22,6 +22,23 @@ This migration adds critical security protections:
    - Requires `currentHash` to be set when invoice is issued
    - Prevents invalid state combinations
 
+### `1770000000007-MakeInvoiceItemQuantityDecimal.ts`
+
+Allows fractional quantities (e.g. `1.5`, `0.25`) on invoice, credit note and debit note lines.
+Changes `quantity` on `invoice_items`, `credit_note_items` and `debit_note_items` from `integer` to `numeric(10,3)`.
+Existing quantities are kept as-is (e.g. `3` becomes `3.000`).
+
+**How to run (once, after pulling this update):**
+
+```bash
+cd backend
+npm install
+npm run migration:run
+```
+
+Then restart the backend. Take a database backup first if this is a production server.
+To undo: `npm run migration:revert` (quantities get rounded back to whole numbers).
+
 ## Running Migrations
 
 ```bash

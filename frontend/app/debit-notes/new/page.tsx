@@ -110,7 +110,7 @@ export default function NewDebitNotePage() {
             {items.map((row, i) => (
               <div key={i} className="grid grid-cols-12 gap-2 mb-2">
                 <input className="col-span-5 px-3 py-2 border rounded" placeholder="Name" value={row.name} onChange={(e) => updateItem(i, 'name', e.target.value)} />
-                <input type="number" min={1} className="col-span-2 px-3 py-2 border rounded" placeholder="Qty" value={row.quantity} onChange={(e) => updateItem(i, 'quantity', e.target.value)} />
+                <input type="number" min={0.001} step={0.001} className="col-span-2 px-3 py-2 border rounded" placeholder="Qty" value={row.quantity} onChange={(e) => updateItem(i, 'quantity', e.target.value)} />
                 <input type="number" min={0} step={0.01} className="col-span-2 px-3 py-2 border rounded" placeholder="Unit price" value={row.unitPrice || ''} onChange={(e) => updateItem(i, 'unitPrice', e.target.value)} />
                 <input type="number" min={0} max={100} className="col-span-2 px-3 py-2 border rounded" placeholder="VAT %" value={row.vatRate} onChange={(e) => updateItem(i, 'vatRate', e.target.value)} />
               </div>
