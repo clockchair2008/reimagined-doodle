@@ -151,7 +151,7 @@ export default function SecurityGuard() {
           } as any
 
           const originalFunction = window.Function
-          window.Function = function (...args: any[]) {
+          window.Function = function (this: any, ...args: any[]) {
             if (args.length > 0 && typeof args[args.length - 1] === 'string') {
               throw new Error('Function constructor is disabled for security')
             }
