@@ -115,13 +115,11 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
   const companyVat = escapeHtml((input.company as any)?.vatNumber ?? '');
   const companyCr = escapeHtml((input.company as any)?.commercialRegistration ?? '');
   const companyCity = escapeHtml((input.company as any)?.city ?? '');
-  const companyPhone = escapeHtml((input.company as any)?.phone ?? '');
 
   const preparedDetails = [
     companyVat ? `VAT: ${companyVat}` : '',
     companyCr ? `CR: ${companyCr}` : '',
     companyCity || '',
-    companyPhone ? `Tel: ${companyPhone}` : '',
   ]
     .filter(Boolean)
     .join(' · ');
