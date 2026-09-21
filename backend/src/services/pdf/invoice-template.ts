@@ -114,6 +114,17 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
   const companyVat = escapeHtml((input.company as any)?.vatNumber ?? '');
   const companyCr = escapeHtml((input.company as any)?.commercialRegistration ?? '');
+  const companyCity = escapeHtml((input.company as any)?.city ?? '');
+  const companyPhone = escapeHtml((input.company as any)?.phone ?? '');
+
+  const preparedDetails = [
+    companyVat ? `VAT: ${companyVat}` : '',
+    companyCr ? `CR: ${companyCr}` : '',
+    companyCity || '',
+    companyPhone ? `Tel: ${companyPhone}` : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
 
   const rightFooter = escapeHtml(input.footerRightText ?? input.documentNumber);
 
@@ -156,7 +167,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       @page {
         size: A4;
-        margin: 20mm 15mm 20mm 15mm;
+        margin: 20mm 15mm 12mm 15mm;
       }
 
       html, body {
@@ -484,12 +495,72 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         margin-top: 4px;
       }
 
-      .footer {
+      /* Stick signatures + footer to the bottom of the page */
+      .page-bottom {
         flex-shrink: 0;
         margin-top: auto;
         width: 100%;
-        padding-top: 14px;
-        padding-bottom: 0;
+        padding-top: 10px;
+      }
+
+      .signatures {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        margin-bottom: 12px;
+        align-items: start;
+      }
+      .sig-block {
+        min-width: 0;
+      }
+      .sig-label {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 4px;
+        margin-bottom: 8px;
+      }
+      .sig-label .en { direction: ltr; }
+      .sig-label .ar { direction: rtl; }
+      .sig-company {
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.3;
+        margin: 0 0 4px;
+      }
+      .sig-detail {
+        font-size: 9px;
+        color: var(--muted);
+        line-height: 1.4;
+        margin: 0;
+      }
+      .sig-stamp {
+        min-height: 52px;
+        border: 1px dashed var(--border);
+        border-radius: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        font-size: 8.5px;
+        line-height: 1.35;
+        padding: 8px;
+        text-align: center;
+      }
+      .sig-stamp .hint-ar {
+        direction: rtl;
+        margin-top: 2px;
+      }
+
+      .footer {
+        width: 100%;
+        padding-top: 8px;
+        padding-bottom: 2px;
         font-size: 9px;
         color: var(--muted);
       }
@@ -670,23 +741,48 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       </div>
       </div>
 
-      <div class="footer">
-        <div class="row">
-          <div></div>
-          <div class="center">${escapeHtml(input.company.name)}</div>
-          <div class="right">${escapeHtml(rightFooter)}</div>
-        </div>
-        <div class="row">
-          <div></div>
-          <div class="center address-block">
-            ${companyAddrLine1 ? `<div>${companyAddrLine1}</div>` : ''}
-            ${companyAddrLine2 ? `<div>${companyAddrLine2}</div>` : ''}
+      <div class="page-bottom">
+        <div class="signatures">
+          <div class="sig-block prepared">
+            <div class="sig-label">
+              <span class="en">Prepared by</span>
+              <span class="ar">أعدت بواسطة</span>
+            </div>
+            <div class="sig-company">${escapeHtml(input.company.name)}</div>
+            ${preparedDetails ? `<p class="sig-detail">${preparedDetails}</p>` : ''}
           </div>
-          <div></div>
+          <div class="sig-block received">
+            <div class="sig-label">
+              <span class="en">Received by</span>
+              <span class="ar">استلمت بواسطة</span>
+            </div>
+            <div class="sig-stamp">
+              <div>
+                <div>Customer stamp / signature</div>
+                <div class="hint-ar">ختم / توقيع العميل</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="small">
-          Electronically generated invoice (ZATCA Phase 1). No signature required for print.
-          <span dir="rtl"> | فاتورة إلكترونية (مرحلة زاتكا 1). لا يتطلب توقيع للطباعة.</span>
+
+        <div class="footer">
+          <div class="row">
+            <div></div>
+            <div class="center">${escapeHtml(input.company.name)}</div>
+            <div class="right">${escapeHtml(rightFooter)}</div>
+          </div>
+          <div class="row">
+            <div></div>
+            <div class="center address-block">
+              ${companyAddrLine1 ? `<div>${companyAddrLine1}</div>` : ''}
+              ${companyAddrLine2 ? `<div>${companyAddrLine2}</div>` : ''}
+            </div>
+            <div></div>
+          </div>
+          <div class="small">
+            Electronically generated invoice (ZATCA Phase 1). No signature required for print.
+            <span dir="rtl"> | فاتورة إلكترونية (مرحلة زاتكا 1). لا يتطلب توقيع للطباعة.</span>
+          </div>
         </div>
       </div>
     </div>
