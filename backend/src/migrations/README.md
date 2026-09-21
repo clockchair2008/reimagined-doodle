@@ -39,6 +39,17 @@ npm run migration:run
 Then restart the backend. Take a database backup first if this is a production server.
 To undo: `npm run migration:revert` (quantities get rounded back to whole numbers).
 
+### `1770000000008-AddInvoiceDeductionFields.ts`
+
+Adds invoice-level deduction support:
+
+- `deductionAmount` — amount deducted from the tax-inclusive total
+- `deductionDescription` — reason (advance payment, retention, discount, etc.)
+- `payableAmount` — amount due after deduction
+- Extends issued-invoice protection triggers to cover these columns
+
+**Fresh Neon DB:** prefer `npm run db:bootstrap` (sync entities + run migrations). See `DEPLOY_NEON_RAILWAY.md`.
+
 ## Running Migrations
 
 ```bash

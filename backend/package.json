@@ -24,6 +24,7 @@
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/config/data-source.ts",
     "seed:admin": "ts-node -r tsconfig-paths/register src/scripts/seed-admin.ts",
     "create:admin": "ts-node src/scripts/create-admin-simple.ts",
+    "db:bootstrap": "ts-node -r tsconfig-paths/register src/scripts/bootstrap-schema.ts",
     "zatca:validate": "node scripts/validate-zatca-xml.js"
   },
   "dependencies": {

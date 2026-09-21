@@ -37,6 +37,8 @@ export default function NewInvoicePage() {
     companyId: '',
     customerId: '',
     issueDateTime: new Date().toISOString().split('T')[0],
+    deductionAmount: 0,
+    deductionDescription: '',
     items: [
       {
         name: '',
@@ -139,11 +141,26 @@ export default function NewInvoicePage() {
       return
     }
 
+    const deductionAmount = Number(formData.deductionAmount || 0)
+    if (deductionAmount < 0) {
+      setError('Deduction amount cannot be negative')
+      setSubmitting(false)
+      return
+    }
+    if (deductionAmount > 0 && !formData.deductionDescription.trim()) {
+      setError('Deduction description is required when a deduction amount is set')
+      setSubmitting(false)
+      return
+    }
+
     try {
       const payload = {
         companyId: formData.companyId,
         customerId: formData.customerId,
         issueDateTime: formData.issueDateTime || new Date().toISOString(),
+        deductionAmount,
+        deductionDescription:
+          deductionAmount > 0 ? formData.deductionDescription.trim() : undefined,
         items: formData.items.map((item) => ({
           name: item.name,
           description: item.description || undefined,
@@ -379,6 +396,56 @@ export default function NewInvoicePage() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Deduction (optional) */}
+          <div className="mb-8 border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Deduction (Optional)</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Reduce the amount due for an advance payment, retention, discount, or similar reason.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="deductionAmount" className="block text-sm font-medium text-gray-700 mb-2">
+                  Deduction Amount (SAR)
+                </label>
+                <input
+                  type="number"
+                  id="deductionAmount"
+                  min="0"
+                  step="0.01"
+                  value={formData.deductionAmount}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      deductionAmount: Number(e.target.value),
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="deductionDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                  Deduction Description
+                  {Number(formData.deductionAmount) > 0 && (
+                    <span className="text-red-500"> *</span>
+                  )}
+                </label>
+                <input
+                  type="text"
+                  id="deductionDescription"
+                  value={formData.deductionDescription}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      deductionDescription: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g. Advance payment, retention, discount"
+                />
+              </div>
             </div>
           </div>
 

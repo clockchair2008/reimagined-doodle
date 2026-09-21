@@ -22,6 +22,9 @@ export interface DocumentLike {
   subtotal: number;
   vatAmount: number;
   totalAmount: number;
+  deductionAmount?: number;
+  deductionDescription?: string | null;
+  payableAmount?: number;
   items: Array<{
     name: string;
     description?: string;
@@ -52,6 +55,12 @@ export class XmlGeneratorService {
         subtotal: Number(invoice.subtotal),
         vatAmount: Number(invoice.vatAmount),
         totalAmount: Number(invoice.totalAmount),
+        deductionAmount: Number(invoice.deductionAmount ?? 0),
+        deductionDescription: invoice.deductionDescription ?? null,
+        payableAmount: Number(
+          invoice.payableAmount ??
+            Number(invoice.totalAmount) - Number(invoice.deductionAmount ?? 0),
+        ),
         items: invoice.items || [],
       },
       company,
@@ -162,6 +171,14 @@ export class XmlGeneratorService {
     root.ele('cbc:InvoiceTypeCode').txt(options.invoiceTypeCode);
     root.ele('cbc:DocumentCurrencyCode').txt('SAR');
 
+    const deductionAmount = Number(doc.deductionAmount ?? 0);
+    const deductionDescription = (doc.deductionDescription ?? '').trim();
+    if (deductionAmount > 0 && deductionDescription) {
+      root
+        .ele('cbc:Note')
+        .txt(`Deduction: ${deductionDescription} (${deductionAmount.toFixed(2)} SAR)`);
+    }
+
     // Accounting Supplier Party with PostalAddress (ZATCA required)
     const supplierParty = root.ele('cac:AccountingSupplierParty');
     const supplierPartyParty = supplierParty.ele('cac:Party');
@@ -228,10 +245,17 @@ export class XmlGeneratorService {
     });
 
     const legalMonetaryTotal = root.ele('cac:LegalMonetaryTotal');
-    legalMonetaryTotal.ele('cbc:LineExtensionAmount', { currencyID: 'SAR' }).txt(doc.subtotal.toFixed(2));
-    legalMonetaryTotal.ele('cbc:TaxExclusiveAmount', { currencyID: 'SAR' }).txt(doc.subtotal.toFixed(2));
-    legalMonetaryTotal.ele('cbc:TaxInclusiveAmount', { currencyID: 'SAR' }).txt(doc.totalAmount.toFixed(2));
-    legalMonetaryTotal.ele('cbc:PayableAmount', { currencyID: 'SAR' }).txt(doc.totalAmount.toFixed(2));
+    legalMonetaryTotal.ele('cbc:LineExtensionAmount', { currencyID: 'SAR' }).txt(Number(doc.subtotal).toFixed(2));
+    legalMonetaryTotal.ele('cbc:TaxExclusiveAmount', { currencyID: 'SAR' }).txt(Number(doc.subtotal).toFixed(2));
+    legalMonetaryTotal.ele('cbc:TaxInclusiveAmount', { currencyID: 'SAR' }).txt(Number(doc.totalAmount).toFixed(2));
+    const prepaid = Number(doc.deductionAmount ?? 0);
+    const payable = Number(
+      doc.payableAmount ?? Number(doc.totalAmount) - prepaid,
+    );
+    if (prepaid > 0) {
+      legalMonetaryTotal.ele('cbc:PrepaidAmount', { currencyID: 'SAR' }).txt(prepaid.toFixed(2));
+    }
+    legalMonetaryTotal.ele('cbc:PayableAmount', { currencyID: 'SAR' }).txt(payable.toFixed(2));
 
     const taxTotal = root.ele('cac:TaxTotal');
     taxTotal.ele('cbc:TaxAmount', { currencyID: 'SAR' }).txt(doc.vatAmount.toFixed(2));

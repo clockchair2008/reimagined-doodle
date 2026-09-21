@@ -25,6 +25,9 @@ export type InvoicePdfTemplateInput = {
   subtotal: number;
   vatTotal: number;
   total: number;
+  deductionAmount?: number;
+  deductionDescription?: string | null;
+  payableAmount?: number;
   logoDataUrl?: string | null;
   qrDataUrl?: string | null;
   footerRightText?: string;
@@ -616,6 +619,27 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
             <div class="currency-sign"><span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></div>
             <div class="value">${money(input.total)}</div>
           </div>
+          ${
+            Number(input.deductionAmount ?? 0) > 0
+              ? `
+          <div class="row">
+            <div class="label">
+              <div class="en">Deduction${input.deductionDescription ? `: ${escapeHtml(input.deductionDescription)}` : ''}</div>
+              <div class="ar">الخصم${input.deductionDescription ? `: ${escapeHtml(input.deductionDescription)}` : ''}</div>
+            </div>
+            <div class="currency-sign"><span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></div>
+            <div class="value">-${money(Number(input.deductionAmount))}</div>
+          </div>
+          <div class="row">
+            <div class="label">
+              <div class="en">Amount Due</div>
+              <div class="ar">المبلغ المستحق</div>
+            </div>
+            <div class="currency-sign"><span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></div>
+            <div class="value">${money(Number(input.payableAmount ?? input.total - Number(input.deductionAmount)))}</div>
+          </div>`
+              : ''
+          }
         </div>
       </div>
       </div>
@@ -689,6 +713,12 @@ export function mapInvoiceToTemplateInput(params: {
     subtotal: Number(invoice.subtotal ?? 0),
     vatTotal: Number(invoice.vatAmount ?? 0),
     total: Number(invoice.totalAmount ?? 0),
+    deductionAmount: Number(invoice.deductionAmount ?? 0),
+    deductionDescription: invoice.deductionDescription ?? null,
+    payableAmount: Number(
+      invoice.payableAmount ??
+        Number(invoice.totalAmount ?? 0) - Number(invoice.deductionAmount ?? 0),
+    ),
     logoDataUrl: (company as any)?.logo ?? null,
     qrDataUrl: qrDataUrl ?? (invoice as any)?.qrCode ?? null,
     footerRightText: invoice.invoiceNumber,

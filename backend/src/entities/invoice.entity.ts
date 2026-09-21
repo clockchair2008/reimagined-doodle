@@ -63,8 +63,24 @@ export class Invoice {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   vatAmount: number;
 
+  /** Tax-inclusive total (subtotal + VAT), before deductions. */
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   totalAmount: number;
+
+  /**
+   * Amount deducted from the tax-inclusive total (advance, retention, discount, etc.).
+   * Mapped to UBL PrepaidAmount; PayableAmount = totalAmount - deductionAmount.
+   */
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  deductionAmount: number;
+
+  /** Reason for the deduction (e.g. advance payment, retention, discount). */
+  @Column({ type: 'text', nullable: true })
+  deductionDescription: string | null;
+
+  /** Amount due after deduction (totalAmount - deductionAmount). */
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  payableAmount: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   previousHash: string;

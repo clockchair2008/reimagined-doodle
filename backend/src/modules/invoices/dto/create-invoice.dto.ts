@@ -7,6 +7,8 @@ import {
   IsOptional,
   IsNumber,
   Min,
+  MaxLength,
+  ValidateIf,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -54,4 +56,17 @@ export class CreateInvoiceDto {
   @ValidateNested({ each: true })
   @Type(() => CreateInvoiceItemDto)
   items: CreateInvoiceItemDto[];
+
+  /** Deduction from tax-inclusive total (advance, retention, discount, etc.). */
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @IsOptional()
+  @Type(() => Number)
+  deductionAmount?: number;
+
+  /** Required when deductionAmount > 0 (e.g. advance payment, retention, discount). */
+  @ValidateIf((o) => Number(o.deductionAmount ?? 0) > 0)
+  @IsString()
+  @MaxLength(1000)
+  deductionDescription?: string;
 }

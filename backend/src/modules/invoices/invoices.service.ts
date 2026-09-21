@@ -106,6 +106,44 @@ export class InvoicesService {
     return invoice;
   }
 
+  /**
+   * Deduction reduces what the buyer pays (advance / retention / discount),
+   * without changing line VAT. payableAmount = totalAmount - deductionAmount.
+   */
+  private resolveDeduction(
+    totalAmount: number,
+    deductionAmountInput?: number | null,
+    deductionDescriptionInput?: string | null,
+  ): { deductionAmount: number; deductionDescription: string | null; payableAmount: number } {
+    const deductionAmount = round2(Number(deductionAmountInput ?? 0));
+    if (deductionAmount < 0) {
+      throw new BadRequestException('Deduction amount cannot be negative');
+    }
+    if (deductionAmount > totalAmount) {
+      throw new BadRequestException(
+        'Deduction amount cannot exceed the invoice total (subtotal + VAT)',
+      );
+    }
+
+    const rawDescription =
+      typeof deductionDescriptionInput === 'string'
+        ? deductionDescriptionInput.trim()
+        : '';
+    const deductionDescription = rawDescription.length > 0 ? rawDescription : null;
+
+    if (deductionAmount > 0 && !deductionDescription) {
+      throw new BadRequestException(
+        'Deduction description is required when a deduction amount is set (e.g. advance payment, retention, or discount)',
+      );
+    }
+
+    return {
+      deductionAmount,
+      deductionDescription,
+      payableAmount: round2(totalAmount - deductionAmount),
+    };
+  }
+
   async create(createInvoiceDto: CreateInvoiceDto): Promise<Invoice> {
     // Validate company and customer exist
     const company = await this.companyRepository.findOne({
@@ -143,6 +181,11 @@ export class InvoicesService {
 
     const vatAmount = round2(items.reduce((sum, item) => sum + item.vatAmount, 0));
     const totalAmount = round2(subtotal + vatAmount);
+    const { deductionAmount, deductionDescription, payableAmount } = this.resolveDeduction(
+      totalAmount,
+      createInvoiceDto.deductionAmount,
+      createInvoiceDto.deductionDescription,
+    );
 
     const issueDate = createInvoiceDto.issueDateTime
       ? new Date(createInvoiceDto.issueDateTime)
@@ -169,6 +212,9 @@ export class InvoicesService {
       subtotal,
       vatAmount,
       totalAmount,
+      deductionAmount,
+      deductionDescription,
+      payableAmount,
       status: InvoiceStatus.DRAFT,
       items,
     });
@@ -279,6 +325,24 @@ export class InvoicesService {
     if (updateInvoiceDto.issueDateTime) {
       invoice.issueDateTime = new Date(updateInvoiceDto.issueDateTime);
     }
+
+    const nextDeductionAmount =
+      updateInvoiceDto.deductionAmount !== undefined
+        ? updateInvoiceDto.deductionAmount
+        : invoice.deductionAmount;
+    const nextDeductionDescription =
+      updateInvoiceDto.deductionDescription !== undefined
+        ? updateInvoiceDto.deductionDescription
+        : invoice.deductionDescription;
+
+    const { deductionAmount, deductionDescription, payableAmount } = this.resolveDeduction(
+      Number(invoice.totalAmount),
+      nextDeductionAmount,
+      nextDeductionDescription,
+    );
+    invoice.deductionAmount = deductionAmount;
+    invoice.deductionDescription = deductionDescription;
+    invoice.payableAmount = payableAmount;
 
     const updatedInvoice = await this.invoiceRepository.save(invoice);
 

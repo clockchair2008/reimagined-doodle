@@ -36,6 +36,15 @@ export class Ubl21ZatcaService {
     root.ele('cbc:DocumentCurrencyCode').txt('SAR');
     root.ele('cbc:TaxCurrencyCode').txt('SAR');
 
+    const prepaidEarly = Number(invoice.deductionAmount ?? 0);
+    if (prepaidEarly > 0 && invoice.deductionDescription) {
+      root
+        .ele('cbc:Note')
+        .txt(
+          `Deduction: ${invoice.deductionDescription} (${prepaidEarly.toFixed(2)} SAR)`,
+        );
+    }
+
     const pihRef = root.ele('cac:AdditionalDocumentReference');
     pihRef.ele('cbc:ID').txt('PIH');
     pihRef.ele('cac:Attachment').ele('cbc:EmbeddedDocumentBinaryObject', {
@@ -66,6 +75,11 @@ export class Ubl21ZatcaService {
     const taxTotal = root.ele('cac:TaxTotal');
     taxTotal.ele('cbc:TaxAmount', { currencyID: 'SAR' }).txt(Number(invoice.vatAmount).toFixed(2));
 
+    const prepaid = Number(invoice.deductionAmount ?? 0);
+    const payable = Number(
+      invoice.payableAmount ?? Number(invoice.totalAmount) - prepaid,
+    );
+
     const legalMonetaryTotal = root.ele('cac:LegalMonetaryTotal');
     legalMonetaryTotal.ele('cbc:LineExtensionAmount', { currencyID: 'SAR' }).txt(
       Number(invoice.subtotal).toFixed(2),
@@ -76,8 +90,11 @@ export class Ubl21ZatcaService {
     legalMonetaryTotal.ele('cbc:TaxInclusiveAmount', { currencyID: 'SAR' }).txt(
       Number(invoice.totalAmount).toFixed(2),
     );
+    if (prepaid > 0) {
+      legalMonetaryTotal.ele('cbc:PrepaidAmount', { currencyID: 'SAR' }).txt(prepaid.toFixed(2));
+    }
     legalMonetaryTotal.ele('cbc:PayableAmount', { currencyID: 'SAR' }).txt(
-      Number(invoice.totalAmount).toFixed(2),
+      payable.toFixed(2),
     );
 
     return { xml: root.end({ prettyPrint: true }), uuid, invoiceTypeCode };

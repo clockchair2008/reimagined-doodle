@@ -23,6 +23,9 @@ interface Invoice {
   subtotal: number
   vatAmount: number
   totalAmount: number
+  deductionAmount?: number
+  deductionDescription?: string | null
+  payableAmount?: number
   status: string
   immutableFlag: boolean
   currentHash?: string
@@ -320,6 +323,29 @@ export default function InvoiceDetailPage() {
                 <span>Total:</span>
                 <span>{formatCurrency(invoice.totalAmount)}</span>
               </div>
+              {Number(invoice.deductionAmount ?? 0) > 0 && (
+                <>
+                  <div className="flex justify-between text-gray-700">
+                    <span>
+                      Deduction
+                      {invoice.deductionDescription
+                        ? ` (${invoice.deductionDescription})`
+                        : ''}
+                      :
+                    </span>
+                    <span>-{formatCurrency(invoice.deductionAmount ?? 0)}</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-2 flex justify-between text-lg font-bold text-gray-900">
+                    <span>Amount Due:</span>
+                    <span>
+                      {formatCurrency(
+                        invoice.payableAmount ??
+                          Number(invoice.totalAmount) - Number(invoice.deductionAmount ?? 0)
+                      )}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
