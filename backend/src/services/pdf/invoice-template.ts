@@ -213,26 +213,30 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         line-height: 1.35;
       }
       .header .block.right { text-align: right; direction: rtl; }
-      /* Top-align logo with first line of left/right text (same row start) */
+      /* Center logo; keep full image visible (no negative margin — that clipped the top) */
       .header .block.center {
         display: flex;
         justify-content: center;
         align-items: flex-start;
         align-self: start;
-        margin: -16px 0 0;
+        margin: 0;
         padding: 0;
+        overflow: visible;
       }
       .logo {
-        width: 130px;
-        height: 130px;
+        width: 140px;
+        height: 140px;
+        max-width: 140px;
+        max-height: 140px;
         object-fit: contain;
+        object-position: center center;
         display: block;
         margin: 0;
         padding: 0;
       }
       .logo-placeholder {
-        width: 130px;
-        height: 130px;
+        width: 140px;
+        height: 140px;
         flex-shrink: 0;
       }
 
@@ -397,9 +401,23 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .totals .label {
         display: grid;
         grid-template-columns: auto auto;
-        align-items: center;
+        align-items: start;
         column-gap: 12px;
         white-space: nowrap;
+      }
+      .totals .label.label-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        white-space: normal;
+        min-width: 0;
+      }
+      .totals .label.label-stack .en,
+      .totals .label.label-stack .ar {
+        white-space: normal;
+        word-break: break-word;
+        max-width: 100%;
       }
       .totals .label .en {
         direction: ltr;
@@ -623,9 +641,17 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
             Number(input.deductionAmount ?? 0) > 0
               ? `
           <div class="row">
+            <div class="label label-stack">
+              <div class="en">Deduction: ${escapeHtml(input.deductionDescription || '—')}</div>
+              <div class="ar">الخصم: ${escapeHtml(input.deductionDescription || '—')}</div>
+            </div>
+            <div class="currency-sign"></div>
+            <div class="value"></div>
+          </div>
+          <div class="row">
             <div class="label">
-              <div class="en">Deduction${input.deductionDescription ? `: ${escapeHtml(input.deductionDescription)}` : ''}</div>
-              <div class="ar">الخصم${input.deductionDescription ? `: ${escapeHtml(input.deductionDescription)}` : ''}</div>
+              <div class="en">Deduction amount</div>
+              <div class="ar">مبلغ الخصم</div>
             </div>
             <div class="currency-sign"><span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></div>
             <div class="value">-${money(Number(input.deductionAmount))}</div>
