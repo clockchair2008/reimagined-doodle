@@ -31,6 +31,8 @@ async function bootstrap() {
   app.enableCors({
     origin: allowedOrigins,
     credentials: true,
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
   console.log(`CORS origins: ${allowedOrigins.join(', ')}`);
 
@@ -43,9 +45,10 @@ async function bootstrap() {
     }),
   );
 
-  const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`🚀 Backend server running on http://localhost:${port}`);
+  const port = Number(process.env.PORT) || 3001;
+  // Railway proxy requires binding 0.0.0.0 (not localhost) or public URL returns 502.
+  await app.listen(port, '0.0.0.0');
+  console.log(`🚀 Backend server running on http://0.0.0.0:${port}`);
 }
 
 bootstrap();
