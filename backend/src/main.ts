@@ -11,32 +11,28 @@ async function bootstrap() {
   app.use(json({ limit: '5mb' }));
   app.use(urlencoded({ extended: true, limit: '5mb' }));
 
-  // Enable CORS for one or more frontend domains.
-  // Use FRONTEND_URLS as comma-separated origins in production.
-  const allowedOrigins = (
-    process.env.FRONTEND_URLS ||
-    process.env.FRONTEND_URL ||
-    'http://localhost:3000'
-  )
-    .split(',')
+  // Allow portal.clockchair.com + localhost by default; extend via FRONTEND_URL(S).
+  const fromEnv = [
+    ...(process.env.FRONTEND_URLS || '').split(','),
+    ...(process.env.FRONTEND_URL || '').split(','),
+  ]
     .map((origin) => origin.trim())
     .filter(Boolean);
 
+  const allowedOrigins = Array.from(
+    new Set([
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://portal.clockchair.com',
+      ...fromEnv,
+    ]),
+  );
+
   app.enableCors({
-    origin: (origin, callback) => {
-      // Allow non-browser tools or same-origin requests with no Origin header
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
-    },
+    origin: allowedOrigins,
     credentials: true,
   });
+  console.log(`CORS origins: ${allowedOrigins.join(', ')}`);
 
   // Global validation pipe
   app.useGlobalPipes(
