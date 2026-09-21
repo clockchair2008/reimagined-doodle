@@ -643,7 +643,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
           <div class="row">
             <div class="label label-stack">
               <div class="en">Deduction: ${escapeHtml(input.deductionDescription || '—')}</div>
-              <div class="ar">الخصم: ${escapeHtml(input.deductionDescription || '—')}</div>
+              <div class="ar">الاستقطاع: ${escapeHtml(input.deductionDescription || '—')}</div>
             </div>
             <div class="currency-sign"></div>
             <div class="value"></div>
@@ -651,7 +651,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
           <div class="row">
             <div class="label">
               <div class="en">Deduction amount</div>
-              <div class="ar">مبلغ الخصم</div>
+              <div class="ar">مبلغ الاستقطاع</div>
             </div>
             <div class="currency-sign"><span class="riyal-symbol"><span class="riyal-base">◌</span>${RIYAL}</span></div>
             <div class="value">-${money(Number(input.deductionAmount))}</div>
