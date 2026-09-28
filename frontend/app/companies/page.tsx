@@ -8,6 +8,7 @@ import api from '../lib/api'
 interface Company {
   id: string
   name: string
+  nameAr?: string | null
   vatNumber: string
   address: string
   city: string
@@ -18,6 +19,10 @@ interface Company {
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([])
   const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [draftAr, setDraftAr] = useState<Record<string, string>>({})
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
     fetchCompanies()
@@ -28,12 +33,18 @@ export default function CompaniesPage() {
   const fetchCompanies = async () => {
     try {
       const response = await api.get('/companies')
-      setCompanies(response.data)
-    } catch (error: any) {
-      if (error.response?.status === 401) {
+      const list: Company[] = response.data
+      setCompanies(list)
+      const drafts: Record<string, string> = {}
+      list.forEach((c) => {
+        drafts[c.id] = c.nameAr || ''
+      })
+      setDraftAr(drafts)
+    } catch (err: any) {
+      if (err.response?.status === 401) {
         router.push('/login')
       }
-      console.error('Error fetching companies:', error)
+      console.error('Error fetching companies:', err)
     } finally {
       setLoading(false)
     }
@@ -43,6 +54,22 @@ export default function CompaniesPage() {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
     router.push('/login')
+  }
+
+  const saveArabicName = async (companyId: string) => {
+    setSavingId(companyId)
+    setMessage('')
+    setError('')
+    try {
+      const nameAr = (draftAr[companyId] || '').trim() || null
+      await api.patch(`/companies/${companyId}`, { nameAr })
+      setMessage('Arabic name saved. Re-download invoice PDF to see it on the right side.')
+      await fetchCompanies()
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to save Arabic name')
+    } finally {
+      setSavingId(null)
+    }
   }
 
   if (loading) {
@@ -74,7 +101,9 @@ export default function CompaniesPage() {
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Companies</h1>
-            <p className="text-gray-600 mt-1">Manage seller company information</p>
+            <p className="text-gray-600 mt-1">
+              Manage seller company information — set Arabic name for the invoice PDF right header
+            </p>
           </div>
           <Link
             href="/companies/new"
@@ -83,6 +112,17 @@ export default function CompaniesPage() {
             + Add New Company
           </Link>
         </div>
+
+        {message && (
+          <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {companies.map((company) => (
@@ -104,11 +144,43 @@ export default function CompaniesPage() {
               {company.phone && (
                 <p className="text-gray-600 mb-3">{company.phone}</p>
               )}
+
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <label
+                  htmlFor={`nameAr-${company.id}`}
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  Company Name (Arabic) <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  id={`nameAr-${company.id}`}
+                  type="text"
+                  dir="rtl"
+                  value={draftAr[company.id] ?? ''}
+                  onChange={(e) =>
+                    setDraftAr((prev) => ({ ...prev, [company.id]: e.target.value }))
+                  }
+                  placeholder="أدخل اسم الشركة بالعربية"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+                />
+                <p className="text-xs text-gray-500 mb-3">
+                  Shown on the right side of invoice PDFs. Left side stays English.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => saveArabicName(company.id)}
+                  disabled={savingId === company.id}
+                  className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 hover:from-blue-700 hover:to-green-700"
+                >
+                  {savingId === company.id ? 'Saving...' : 'Save Arabic Name'}
+                </button>
+              </div>
+
               <Link
                 href={`/companies/${company.id}/edit`}
-                className="inline-block mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+                className="inline-block mt-3 text-sm font-medium text-blue-600 hover:text-blue-800"
               >
-                Edit
+                Edit full details →
               </Link>
             </div>
           ))}
