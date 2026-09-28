@@ -208,49 +208,84 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       .header {
         display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: start;
-        align-content: start;
-        column-gap: 18px;
-        margin-top: 2mm;
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        align-items: center;
+        column-gap: 14px;
+        margin-top: 1mm;
       }
       .header .block {
         font-size: 10px;
-        line-height: 1.35;
-        align-self: start;
+        line-height: 1.4;
         min-width: 0;
         margin: 0;
         padding: 0;
       }
       .header .block h1 {
-        margin: 0;
+        margin: 0 0 4px;
         padding: 0;
-        font-size: 19px;
+        font-size: 15px;
         font-weight: 700;
-        line-height: 1.2;
+        line-height: 1.25;
+        letter-spacing: -0.01em;
       }
-      /* Country, VAT, CR */
+      /* Arabic glyphs look larger at the same px — keep them visually matched */
+      .header .block.right h1 {
+        font-size: 14px;
+        font-weight: 700;
+      }
+      /* Country, VAT, CR — compact, same visual weight EN/AR */
       .header .block .line {
-        margin: 2px 0;
-        font-size: 16px;
-        line-height: 1.35;
+        margin: 0;
+        padding: 1px 0;
+        font-size: 9.5px;
+        line-height: 1.45;
+        color: #374151;
       }
-      .header .block.right { text-align: right; direction: rtl; }
-      /* Center logo; keep full image visible (no negative margin — that clipped the top) */
+      .header .block.right .line {
+        font-size: 9px;
+      }
+      .header .block .line-inline {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: baseline;
+        gap: 5px;
+        white-space: nowrap;
+      }
+      .header .block.left .line-inline {
+        justify-content: flex-start;
+      }
+      .header .block.right .line-inline {
+        justify-content: flex-end;
+        direction: rtl;
+      }
+      .header .block .line-inline .lbl {
+        flex: 0 1 auto;
+        min-width: 0;
+      }
+      .header .block .line-inline .val {
+        flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.01em;
+      }
+      .header .block.right {
+        text-align: right;
+        direction: rtl;
+      }
+      /* Center logo vertically with both text columns */
       .header .block.center {
         display: flex;
         justify-content: center;
-        align-items: flex-start;
-        align-self: start;
+        align-items: center;
+        align-self: center;
         margin: 0;
         padding: 0;
         overflow: visible;
       }
       .logo {
-        width: 140px;
-        height: 140px;
-        max-width: 140px;
-        max-height: 140px;
+        width: 108px;
+        height: 108px;
+        max-width: 108px;
+        max-height: 108px;
         object-fit: contain;
         object-position: center center;
         display: block;
@@ -258,14 +293,14 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         padding: 0;
       }
       .logo-placeholder {
-        width: 140px;
-        height: 140px;
+        width: 108px;
+        height: 108px;
         flex-shrink: 0;
       }
 
       .divider {
-        margin: 4px 0 14px;
-        border-top: 2px solid var(--grid);
+        margin: 8px 0 12px;
+        border-top: 1.5px solid var(--grid);
       }
 
       .title {
@@ -276,20 +311,21 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
-        align-items: center;
-        column-gap: 28px;
-        row-gap: 6px;
+        align-items: baseline;
+        column-gap: 20px;
+        row-gap: 4px;
         text-align: center;
       }
       .title.title-inline .en,
       .title.title-inline .ar {
-        font-size: 22px;
+        font-size: 17px;
         font-weight: 700;
         margin: 0;
-        line-height: 1.2;
+        line-height: 1.25;
       }
       .title.title-inline .ar {
         direction: rtl;
+        font-size: 16px;
       }
 
       .info-box {
@@ -324,6 +360,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .meta-full .meta-ar {
         width: 26%;
         font-weight: 600;
+        font-size: 10px;
         text-align: right;
         direction: rtl;
         background: #f9fafb;
@@ -411,7 +448,7 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       .totals {
         width: 100%;
-        font-size: 12px;
+        font-size: 11px;
       }
       .totals .row {
         display: grid;
@@ -605,8 +642,14 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         <div class="block left">
           <h1>${escapeHtml(input.company.name)}</h1>
           <div class="line">${companyCountryEn}</div>
-          <div class="line">VAT number ${companyVat}</div>
-          <div class="line">CR Number ${companyCr || '—'}</div>
+          <div class="line line-inline">
+            <span class="lbl">VAT number</span>
+            <span class="val">${companyVat}</span>
+          </div>
+          <div class="line line-inline">
+            <span class="lbl">CR Number</span>
+            <span class="val">${companyCr || '—'}</span>
+          </div>
         </div>
         <div class="block center">
           ${logoHtml}
@@ -614,8 +657,14 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         <div class="block right">
           <h1 dir="rtl">${companyNameAr}</h1>
           <div class="line">${companyCountryAr}</div>
-          <div class="line" dir="rtl">رقم التسجيل الضريبي ${companyVatAr}</div>
-          <div class="line" dir="rtl">رقم السجل التجاري ${companyCrAr}</div>
+          <div class="line line-inline">
+            <span class="lbl">رقم التسجيل الضريبي</span>
+            <span class="val">${companyVatAr}</span>
+          </div>
+          <div class="line line-inline">
+            <span class="lbl">رقم السجل التجاري</span>
+            <span class="val">${companyCrAr}</span>
+          </div>
         </div>
       </div>
 
