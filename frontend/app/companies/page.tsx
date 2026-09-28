@@ -102,8 +102,14 @@ export default function CompaniesPage() {
                 <p className="text-gray-600 mb-1">{company.email}</p>
               )}
               {company.phone && (
-                <p className="text-gray-600">{company.phone}</p>
+                <p className="text-gray-600 mb-3">{company.phone}</p>
               )}
+              <Link
+                href={`/companies/${company.id}/edit`}
+                className="inline-block mt-2 text-sm font-medium text-blue-600 hover:text-blue-800"
+              >
+                Edit
+              </Link>
             </div>
           ))}
         </div>

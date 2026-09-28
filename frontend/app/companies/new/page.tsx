@@ -12,7 +12,9 @@ export default function NewCompanyPage() {
 
   const [formData, setFormData] = useState({
     name: '',
+    nameAr: '',
     vatNumber: '',
+    commercialRegistration: '',
     address: '',
     streetName: '',
     buildingNumber: '',
@@ -48,6 +50,12 @@ export default function NewCompanyPage() {
       return
     }
 
+    if (!formData.nameAr.trim()) {
+      setError('Arabic company name is required')
+      setSubmitting(false)
+      return
+    }
+
     if (!formData.vatNumber.trim()) {
       setError('VAT Number is required')
       setSubmitting(false)
@@ -63,7 +71,9 @@ export default function NewCompanyPage() {
     try {
       const payload = {
         name: formData.name.trim(),
+        nameAr: formData.nameAr.trim() || undefined,
         vatNumber: formData.vatNumber.trim(),
+        commercialRegistration: formData.commercialRegistration.trim() || undefined,
         address: formData.address.trim() || undefined,
         streetName: formData.streetName.trim() || undefined,
         buildingNumber: formData.buildingNumber.trim() || undefined,
@@ -128,7 +138,7 @@ export default function NewCompanyPage() {
             <div className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Company Name <span className="text-red-500">*</span>
+                  Company Name (English) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -138,8 +148,26 @@ export default function NewCompanyPage() {
                   value={formData.name}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter company name"
+                  placeholder="Enter company name in English"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="nameAr" className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name (Arabic) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="nameAr"
+                  name="nameAr"
+                  required
+                  dir="rtl"
+                  value={formData.nameAr}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="أدخل اسم الشركة بالعربية"
+                />
+                <p className="mt-1 text-sm text-gray-500">Shown on the right side of invoice PDFs</p>
               </div>
 
               <div>
@@ -157,6 +185,21 @@ export default function NewCompanyPage() {
                   placeholder="Enter VAT registration number"
                 />
                 <p className="mt-1 text-sm text-gray-500">ZATCA VAT registration number</p>
+              </div>
+
+              <div>
+                <label htmlFor="commercialRegistration" className="block text-sm font-medium text-gray-700 mb-2">
+                  CR Number
+                </label>
+                <input
+                  type="text"
+                  id="commercialRegistration"
+                  name="commercialRegistration"
+                  value={formData.commercialRegistration}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Commercial registration number"
+                />
               </div>
             </div>
           </div>

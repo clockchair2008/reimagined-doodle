@@ -5,6 +5,10 @@ export class CreateCompanyDto {
   name: string;
 
   @IsString()
+  @IsOptional()
+  nameAr?: string;
+
+  @IsString()
   @Matches(/^\d{15}$/, {
     message: 'vatNumber must be exactly 15 digits (Saudi VAT format)',
   })

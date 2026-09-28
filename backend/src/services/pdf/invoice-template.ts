@@ -50,6 +50,12 @@ function money(n: number): string {
   return x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** Convert Western digits to Eastern Arabic-Indic numerals (٠-٩). */
+function toArabicDigits(input: any): string {
+  const s = String(input ?? '');
+  return s.replace(/[0-9]/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)]);
+}
+
 // Official Riyal symbol glyph (requires a font that supports it)
 const RIYAL = '⃁';
 
@@ -115,6 +121,13 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
   const companyVat = escapeHtml((input.company as any)?.vatNumber ?? '');
   const companyCr = escapeHtml((input.company as any)?.commercialRegistration ?? '');
   const companyCity = escapeHtml((input.company as any)?.city ?? '');
+  const companyNameAr = escapeHtml(
+    (input.company as any)?.nameAr || input.company.name,
+  );
+  const companyVatAr = escapeHtml(toArabicDigits((input.company as any)?.vatNumber ?? ''));
+  const companyCrAr = escapeHtml(
+    toArabicDigits((input.company as any)?.commercialRegistration ?? '') || '—',
+  );
 
   const preparedDetails = [
     companyVat ? `VAT: ${companyVat}` : '',
@@ -598,10 +611,10 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
           ${logoHtml}
         </div>
         <div class="block right">
-          <h1 dir="rtl">${escapeHtml(input.company.name)}</h1>
+          <h1 dir="rtl">${companyNameAr}</h1>
           <div class="line">${companyCountryAr}</div>
-          <div class="line" dir="rtl">رقم التسجيل الضريبي ${companyVat}</div>
-          <div class="line" dir="rtl">رقم السجل التجاري ${companyCr || '—'}</div>
+          <div class="line" dir="rtl">رقم التسجيل الضريبي ${companyVatAr}</div>
+          <div class="line" dir="rtl">رقم السجل التجاري ${companyCrAr}</div>
         </div>
       </div>
 

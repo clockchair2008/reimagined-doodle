@@ -54,6 +54,7 @@ export class InvoicesService {
     return {
       id: company.id,
       name: company.name,
+      nameAr: (company as any).nameAr ?? null,
       vatNumber: company.vatNumber,
       commercialRegistration: company.commercialRegistration ?? null,
       address: company.address ?? null,
