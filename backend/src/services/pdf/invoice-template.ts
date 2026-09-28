@@ -319,14 +319,10 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       .title {
         margin: 0 0 10px;
+        text-align: center;
       }
       .title.title-inline {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-items: center;
-        column-gap: 28px;
-        row-gap: 6px;
+        display: block;
         text-align: center;
       }
       .title.title-inline .en {
@@ -334,13 +330,6 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         font-weight: 700;
         margin: 0;
         line-height: 1.2;
-      }
-      .title.title-inline .ar {
-        font-size: 20px;
-        font-weight: 700;
-        margin: 0;
-        line-height: 1.2;
-        direction: rtl;
       }
 
       .info-box {
@@ -686,7 +675,6 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
 
       <div class="title title-inline">
         <span class="en">${escapeHtml(input.titleEn)}</span>
-        <span class="ar" dir="rtl">${escapeHtml(input.titleAr)}</span>
       </div>
 
       <div class="info-box">
