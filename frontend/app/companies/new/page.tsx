@@ -182,7 +182,7 @@ export default function NewCompanyPage() {
 
               <div>
                 <label htmlFor="commercialRegistration" className="block text-sm font-medium text-gray-700 mb-2">
-                  CR Number
+                  Commercial Registration (CR)
                 </label>
                 <input
                   type="text"

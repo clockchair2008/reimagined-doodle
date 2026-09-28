@@ -134,125 +134,185 @@ export default function EditCompanyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <Link href="/companies" className="text-sm text-gray-600 hover:text-gray-900">
-              ← Back to Companies
+            <Link href="/companies" className="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Back to Companies</span>
             </Link>
           </div>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-6">Edit Company</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit Company</h1>
+          <p className="text-gray-600">Update seller company information for ZATCA compliance</p>
+        </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">{error}</div>
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8 border border-gray-100 space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name (English) <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8 border border-gray-100">
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Required Information</h2>
 
-          <div>
-            <label htmlFor="nameAr" className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name (Arabic) <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              id="nameAr"
-              name="nameAr"
-              dir="rtl"
-              value={formData.nameAr}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="أدخل اسم الشركة بالعربية"
-            />
-            <p className="mt-1 text-sm text-gray-500">If set, shown on the right side of invoice PDFs</p>
-          </div>
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name (English) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter company name in English"
+                />
+              </div>
 
-          <div>
-            <label htmlFor="vatNumber" className="block text-sm font-medium text-gray-700 mb-2">
-              VAT Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="vatNumber"
-              name="vatNumber"
-              required
-              value={formData.vatNumber}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              <div>
+                <label htmlFor="nameAr" className="block text-sm font-medium text-gray-700 mb-2">
+                  Company Name (Arabic) <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="nameAr"
+                  name="nameAr"
+                  dir="rtl"
+                  value={formData.nameAr}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="أدخل اسم الشركة بالعربية"
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  If entered, this appears on the right side of invoice PDFs (left side stays English)
+                </p>
+              </div>
 
-          <div>
-            <label htmlFor="commercialRegistration" className="block text-sm font-medium text-gray-700 mb-2">
-              CR Number
-            </label>
-            <input
-              type="text"
-              id="commercialRegistration"
-              name="commercialRegistration"
-              value={formData.commercialRegistration}
-              onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+              <div>
+                <label htmlFor="vatNumber" className="block text-sm font-medium text-gray-700 mb-2">
+                  VAT Number (Tax ID) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="vatNumber"
+                  name="vatNumber"
+                  required
+                  value={formData.vatNumber}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter VAT registration number"
+                />
+                <p className="mt-1 text-sm text-gray-500">ZATCA VAT registration number</p>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-              <input type="text" id="phone" name="phone" value={formData.phone} onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-            <textarea id="address" name="address" rows={2} value={formData.address} onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">City</label>
-              <input type="text" id="city" name="city" value={formData.city} onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-            </div>
-            <div>
-              <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-              <input type="text" id="country" name="country" value={formData.country} onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              <div>
+                <label htmlFor="commercialRegistration" className="block text-sm font-medium text-gray-700 mb-2">
+                  Commercial Registration (CR)
+                </label>
+                <input
+                  type="text"
+                  id="commercialRegistration"
+                  name="commercialRegistration"
+                  value={formData.commercialRegistration}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Commercial registration number"
+                />
+              </div>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <input
+                  type="text"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Address</h2>
+            <div className="space-y-6">
+              <div>
+                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <textarea
+                  id="address"
+                  name="address"
+                  rows={2}
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">Country</label>
+                  <input
+                    type="text"
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
             <button
               type="submit"
               disabled={submitting}
-              className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50"
+              className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-6 py-3 rounded-lg font-medium disabled:opacity-50 hover:from-blue-700 hover:to-green-700"
             >
               {submitting ? 'Saving...' : 'Save Changes'}
             </button>
-            <Link href="/companies" className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+            <Link
+              href="/companies"
+              className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+            >
               Cancel
             </Link>
           </div>
