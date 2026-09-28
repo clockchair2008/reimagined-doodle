@@ -248,13 +248,18 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
         align-items: baseline;
         gap: 6px;
         white-space: nowrap;
+        width: 100%;
       }
       .header .block.left .line-inline {
         justify-content: flex-start;
+        direction: ltr;
       }
+      /* Pin Arabic meta lines flush to the right edge */
       .header .block.right .line-inline {
-        justify-content: flex-end;
+        display: block;
         direction: rtl;
+        text-align: right;
+        white-space: nowrap;
       }
       .header .block .line-inline .lbl {
         flex: 0 1 auto;
@@ -263,10 +268,22 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
       .header .block .line-inline .val {
         flex: 0 0 auto;
         font-variant-numeric: tabular-nums;
+        unicode-bidi: isolate;
+      }
+      .header .block.right .line-inline .val {
+        margin-inline-start: 6px;
       }
       .header .block.right {
         text-align: right;
         direction: rtl;
+        justify-self: stretch;
+        width: 100%;
+      }
+      .header .block.right h1,
+      .header .block.right .line {
+        text-align: right;
+        width: 100%;
+        margin-left: auto;
       }
       /* Logo + Arabic sit at the top, aligned with English block */
       .header .block.center {
