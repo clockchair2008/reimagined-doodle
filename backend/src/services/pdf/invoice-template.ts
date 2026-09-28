@@ -121,8 +121,9 @@ export function renderZatcaInvoiceHtml(input: InvoicePdfTemplateInput): string {
   const companyVat = escapeHtml((input.company as any)?.vatNumber ?? '');
   const companyCr = escapeHtml((input.company as any)?.commercialRegistration ?? '');
   const companyCity = escapeHtml((input.company as any)?.city ?? '');
+  // Left header: English name. Right header: Arabic name when set, else English.
   const companyNameAr = escapeHtml(
-    (input.company as any)?.nameAr || input.company.name,
+    String((input.company as any)?.nameAr || '').trim() || input.company.name,
   );
   const companyVatAr = escapeHtml(toArabicDigits((input.company as any)?.vatNumber ?? ''));
   const companyCrAr = escapeHtml(

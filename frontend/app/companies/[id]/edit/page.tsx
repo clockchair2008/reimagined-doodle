@@ -90,11 +90,6 @@ export default function EditCompanyPage() {
       setSubmitting(false)
       return
     }
-    if (!formData.nameAr.trim()) {
-      setError('Arabic company name is required')
-      setSubmitting(false)
-      return
-    }
     if (!formData.vatNumber.trim()) {
       setError('VAT Number is required')
       setSubmitting(false)
@@ -104,7 +99,7 @@ export default function EditCompanyPage() {
     try {
       const payload: Record<string, any> = {
         name: formData.name.trim(),
-        nameAr: formData.nameAr.trim(),
+        nameAr: formData.nameAr.trim() || null,
         vatNumber: formData.vatNumber.trim(),
         commercialRegistration: formData.commercialRegistration.trim() || undefined,
         address: formData.address.trim() || undefined,
@@ -173,20 +168,19 @@ export default function EditCompanyPage() {
 
           <div>
             <label htmlFor="nameAr" className="block text-sm font-medium text-gray-700 mb-2">
-              Company Name (Arabic) <span className="text-red-500">*</span>
+              Company Name (Arabic) <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <input
               type="text"
               id="nameAr"
               name="nameAr"
-              required
               dir="rtl"
               value={formData.nameAr}
               onChange={handleChange}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="أدخل اسم الشركة بالعربية"
             />
-            <p className="mt-1 text-sm text-gray-500">Shown on the right side of invoice PDFs</p>
+            <p className="mt-1 text-sm text-gray-500">If set, shown on the right side of invoice PDFs</p>
           </div>
 
           <div>
