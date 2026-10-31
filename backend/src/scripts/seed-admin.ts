@@ -46,13 +46,27 @@ async function seedAdmin() {
 
     const userRepository = dataSource.getRepository(User);
 
-    // Check if admin already exists
-    const existingAdmin = await userRepository.findOne({
+    const ADMIN_EMAIL = 'admin@clockchair.com';
+
+    // Rename legacy seed email if present
+    const legacyAdmin = await userRepository.findOne({
       where: { email: 'admin@zatca.com' },
+    });
+    if (legacyAdmin) {
+      const clash = await userRepository.findOne({ where: { email: ADMIN_EMAIL } });
+      if (!clash) {
+        legacyAdmin.email = ADMIN_EMAIL;
+        await userRepository.save(legacyAdmin);
+        console.log(`ℹ️  Renamed admin email to ${ADMIN_EMAIL}`);
+      }
+    }
+
+    const existingAdmin = await userRepository.findOne({
+      where: { email: ADMIN_EMAIL },
     });
 
     if (existingAdmin) {
-      console.log('ℹ️  Admin user already exists');
+      console.log(`ℹ️  Admin user already exists (${ADMIN_EMAIL})`);
       await dataSource.destroy();
       return;
     }
@@ -62,7 +76,7 @@ async function seedAdmin() {
     const hashedPassword = await bcrypt.hash('admin123', salt);
 
     const admin = userRepository.create({
-      email: 'admin@zatca.com',
+      email: ADMIN_EMAIL,
       password: hashedPassword,
       name: 'System Administrator',
       role: 'admin',
@@ -73,7 +87,7 @@ async function seedAdmin() {
 
     console.log('\n✅ Admin user created successfully!');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('📧 Email:    admin@zatca.com');
+    console.log(`📧 Email:    ${ADMIN_EMAIL}`);
     console.log('🔑 Password: admin123');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('⚠️  Please change the password after first login!\n');

@@ -35,6 +35,13 @@ export class User {
   @Column({ type: 'timestamp', nullable: true })
   lastLogin: Date;
 
+  /** SHA-256 hash of one-time password reset token */
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  passwordResetTokenHash: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  passwordResetExpiresAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
